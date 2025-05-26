@@ -137,6 +137,13 @@ export const insertEventSchema = createInsertSchema(events).omit({
   isCanceled: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  eventDate: z.string().or(z.date()).transform((val) => {
+    if (typeof val === 'string') {
+      return new Date(val);
+    }
+    return val;
+  }),
 });
 
 export const insertUserPreferencesSchema = createInsertSchema(users).pick({

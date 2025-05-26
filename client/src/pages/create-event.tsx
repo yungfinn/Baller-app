@@ -55,11 +55,11 @@ export default function CreateEvent() {
   });
 
   const onSubmit = (data: InsertEvent) => {
-    // Convert date and time to proper format
-    const eventDateTime = new Date(`${data.eventDate}T${data.eventTime}`);
+    // Convert date and time to proper format  
+    const eventDateTime = `${data.eventDate}T${data.eventTime}`;
     createEventMutation.mutate({
       ...data,
-      eventDate: eventDateTime.toISOString(),
+      eventDate: eventDateTime,
     });
   };
 
