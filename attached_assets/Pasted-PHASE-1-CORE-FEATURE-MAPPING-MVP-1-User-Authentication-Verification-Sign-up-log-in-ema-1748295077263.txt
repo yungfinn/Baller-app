@@ -1,0 +1,98 @@
+PHASE 1: CORE FEATURE MAPPING (MVP)
+1. User Authentication & Verification
+
+    Sign up / log in (email, phone, or social login)
+
+    Optional identity verification (badge on profile)
+
+2. User Preferences Setup
+
+    Gender identity (to match or filter games)
+
+    Sports of interest (multi-select: basketball, soccer, etc.)
+
+    Skill level (Beginner, Recreational, Collegiate, Professional)
+
+    Search radius (slider up to 100mi)
+
+3. Location & Event Hosting
+
+    Verified users can suggest event locations (dropdown w/ map pin: park, school, gym, etc.)
+
+    Create an event: sport type, skill level, max players, time, date, notes (e.g. bring water)
+
+    Admin/mod approval if needed for public hosting
+
+4. Event Discovery
+
+    Grid View: Card-style layout of upcoming events with filters applied
+
+    Swipe View (Tinder-style):
+
+        Swipe right to join/show interest
+
+        Swipe left to skip
+
+        "Details" button opens full event info
+
+🛠️ PHASE 2: FUNCTIONAL SYSTEMS & BACKEND LOGIC
+Matchmaking & Filtering
+
+    Query system that pulls events within user’s radius + filters (sport, gender, level)
+
+Event Management
+
+    RSVP system: track who’s in
+
+    Event cap enforcement
+
+    Waitlist if full
+
+Notifications
+
+    Reminders before events
+
+    Alerts if event is canceled or changed
+
+Map Integration
+
+    Google Maps or OpenStreetMap integration for event pins
+
+📱 PHASE 3: UI/UX STRUCTURE
+App Pages (Rough Wireframe)
+
+    Welcome / Onboarding
+
+    Preferences Setup
+
+    Home View (Tab: Grid / Swipe)
+
+    Event Detail View
+
+    Create/Host Event
+
+    My Events
+
+    Profile
+
+    Verification Upload (if needed)
+
+UX/UI Notes:
+
+    Keep Tinder swipe interactions lightweight and social
+
+    Use color-coded badges for levels (e.g., green for beginner, red for pro)
+
+    Profile icons should show availability + verification badge if applicable
+
+🔧 PHASE 4: REPLIT BASE MODEL SETUP
+
+Let’s get ready to build by scaffolding the app with:
+
+    React + Tailwind UI (for swipe + grid views)
+
+    Firebase or Supabase (auth, database, event handling)
+
+    Mapbox or Google Maps API
+
+    Basic routing with React Router or Next.js
