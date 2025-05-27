@@ -4,6 +4,7 @@ import {
   eventRsvps,
   userSwipes,
   verificationDocuments,
+  locations,
   type User,
   type UpsertUser,
   type Event,
@@ -14,6 +15,8 @@ import {
   type InsertUserPreferences,
   type InsertVerificationDocument,
   type VerificationDocument,
+  type Location,
+  type InsertLocation,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql, desc, asc, inArray, notInArray } from "drizzle-orm";
@@ -58,6 +61,17 @@ export interface IStorage {
   getUserVerificationDocuments(userId: string): Promise<VerificationDocument[]>;
   updateVerificationStatus(userId: string, status: string, reviewNotes?: string, reviewedBy?: string): Promise<User>;
   getVerificationDocumentsByType(userId: string, documentType: string): Promise<VerificationDocument[]>;
+  
+  // Location operations
+  submitLocation(location: InsertLocation): Promise<Location>;
+  getLocations(filters?: {
+    status?: string;
+    locationType?: string;
+    submittedBy?: string;
+  }): Promise<Location[]>;
+  getLocationById(id: number): Promise<Location | undefined>;
+  updateLocationStatus(id: number, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Location>;
+  deleteLocation(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -341,6 +355,73 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(verificationDocuments.uploadedAt));
+  }
+
+  // Location operations
+  async submitLocation(location: InsertLocation): Promise<Location> {
+    const [newLocation] = await db
+      .insert(locations)
+      .values({
+        ...location,
+        status: "pending",
+        approvalTier: location.isPublicSpace ? "tier_1" : "tier_2",
+      })
+      .returning();
+    return newLocation;
+  }
+
+  async getLocations(filters?: {
+    status?: string;
+    locationType?: string;
+    submittedBy?: string;
+  }): Promise<Location[]> {
+    let query = db.select().from(locations);
+
+    if (filters) {
+      const conditions = [];
+      if (filters.status) {
+        conditions.push(eq(locations.status, filters.status));
+      }
+      if (filters.locationType) {
+        conditions.push(eq(locations.locationType, filters.locationType));
+      }
+      if (filters.submittedBy) {
+        conditions.push(eq(locations.submittedBy, filters.submittedBy));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+    }
+
+    return await query.orderBy(desc(locations.createdAt));
+  }
+
+  async getLocationById(id: number): Promise<Location | undefined> {
+    const [location] = await db
+      .select()
+      .from(locations)
+      .where(eq(locations.id, id));
+    return location;
+  }
+
+  async updateLocationStatus(id: number, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Location> {
+    const [updatedLocation] = await db
+      .update(locations)
+      .set({
+        status,
+        reviewNotes,
+        reviewedBy,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(locations.id, id))
+      .returning();
+    return updatedLocation;
+  }
+
+  async deleteLocation(id: number): Promise<void> {
+    await db.delete(locations).where(eq(locations.id, id));
   }
 }
 
