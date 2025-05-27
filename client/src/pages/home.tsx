@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Search, Filter, Grid3X3, RotateCcw, MapPin } from "lucide-react";
 import SwipeView from "@/components/swipe-view";
 import GridView from "@/components/grid-view";
 import BottomNavigation from "@/components/bottom-navigation";
@@ -11,10 +15,17 @@ export default function Home() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [viewMode, setViewMode] = useState<"swipe" | "grid">("swipe");
-  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sportFilter, setSportFilter] = useState("all");
+  const [skillFilter, setSkillFilter] = useState("all");
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["/api/events", { sport: activeFilter !== "all" ? activeFilter : undefined, view: viewMode }],
+    queryKey: ["/api/events", { 
+      sport: sportFilter !== "all" ? sportFilter : undefined,
+      skill: skillFilter !== "all" ? skillFilter : undefined,
+      search: searchQuery || undefined
+    }],
   });
 
   // Check if user needs to set preferences
@@ -63,20 +74,27 @@ export default function Home() {
               <h1 className="text-xl font-baller text-gray-900">Baller</h1>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center space-x-1 px-2 py-1 rounded-full bg-gray-100 transition-colors"
+              >
+                <Filter className="w-4 h-4 text-gray-600" />
+                <span className="text-xs text-gray-600">Filter</span>
+              </button>
               <button 
                 onClick={() => setViewMode(viewMode === "swipe" ? "grid" : "swipe")}
-                className="flex items-center space-x-2 px-3 py-1 rounded-full bg-gray-100 transition-colors"
+                className="flex items-center space-x-1 px-2 py-1 rounded-full bg-gray-100 transition-colors"
               >
                 {viewMode === "swipe" ? (
                   <>
-                    <i className="fas fa-th-large text-gray-600 text-sm"></i>
-                    <i className="fas fa-layer-group text-primary text-sm"></i>
+                    <Grid3X3 className="w-4 h-4 text-gray-600" />
+                    <span className="text-xs text-gray-600">Grid</span>
                   </>
                 ) : (
                   <>
-                    <i className="fas fa-layer-group text-gray-600 text-sm"></i>
-                    <i className="fas fa-th-large text-primary text-sm"></i>
+                    <RotateCcw className="w-4 h-4 text-gray-600" />
+                    <span className="text-xs text-gray-600">Swipe</span>
                   </>
                 )}
               </button>
@@ -96,24 +114,90 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Filters */}
+      {/* Search and Enhanced Filters */}
       <section className="bg-white border-b border-gray-100 pb-4">
         <div className="max-w-md mx-auto px-4 pt-4">
-          <div className="flex items-center space-x-3 overflow-x-auto pb-2">
-            {sportFilters.map((filter) => (
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search events by title or location..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-10 rounded-lg border-gray-200 focus:border-primary focus:ring-primary"
+            />
+          </div>
+
+          {/* Quick Sport Filters */}
+          <div className="flex items-center space-x-3 overflow-x-auto pb-2 mb-3">
+            {["all", "basketball", "soccer", "tennis", "volleyball"].map((sport) => (
               <button
-                key={filter.key}
-                onClick={() => setActiveFilter(filter.key)}
+                key={sport}
+                onClick={() => setSportFilter(sport)}
                 className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  activeFilter === filter.key
+                  sportFilter === sport
                     ? "bg-primary text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                {filter.label}
+                {sport === "all" ? "All Sports" : sport.charAt(0).toUpperCase() + sport.slice(1)}
               </button>
             ))}
           </div>
+
+          {/* Advanced Filters (Collapsible) */}
+          {showFilters && (
+            <div className="space-y-3 pt-3 border-t border-gray-100">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">Skill Level</label>
+                  <Select value={skillFilter} onValueChange={setSkillFilter}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Levels</SelectItem>
+                      <SelectItem value="beginner">Beginner</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                      <SelectItem value="professional">Professional</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">Distance</label>
+                  <Select value="all" onValueChange={() => {}}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Within..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 miles</SelectItem>
+                      <SelectItem value="10">10 miles</SelectItem>
+                      <SelectItem value="25">25 miles</SelectItem>
+                      <SelectItem value="50">50 miles</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {/* Clear Filters */}
+              {(sportFilter !== "all" || skillFilter !== "all" || searchQuery) && (
+                <Button
+                  onClick={() => {
+                    setSportFilter("all");
+                    setSkillFilter("all");
+                    setSearchQuery("");
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8"
+                >
+                  <RotateCcw className="w-3 h-3 mr-2" />
+                  Clear All Filters
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

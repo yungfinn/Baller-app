@@ -1,0 +1,88 @@
+🏀 BALLER – Seed-Stage Product Roadmap
+🛠️ PHASE 1: MVP (Minimum Viable Product)
+
+    🎯 Goal: Launchable version of Baller with essential features and a strong UX/UI foundation.
+
+✅ Core Features (Already In Progress / Built)
+
+Tinder-style + Grid view to discover events
+
+User preferences: sport type, skill level, gender, distance (up to 100mi)
+
+Identity verification flow (Selfie + Government ID)
+
+Secure sign-up/login + age validation (18+)
+
+Location submission form with safety disclaimers
+
+Legal Terms of Use + Risk & Venue disclaimers
+
+    Brand identity: logo, color palette, and styling
+
+🧩 Next MVP Features to Add
+
+Bottom navigation bar with Home / Create Event / Profile
+
+Event card interface (time, location, host, level, # of players)
+
+RSVP/Join logic w/ user event history
+
+Admin review panel for location submissions
+
+Push or in-app notifications (event reminders, updates)
+
+    Map view (optional for MVP, helpful for finding courts)
+
+🔁 PHASE 2: Post-MVP Growth Features
+
+    🔥 Goal: Increase user retention, trust, and viral growth.
+
+🧪 Gamification & Trust Systems
+
+Player “Rep Score” based on showing up, hosting, and ratings
+
+Title badges (e.g., MVP, Rookie, Playmaker)
+
+    Host ratings and event feedback
+
+💬 Communication Tools
+
+Secure in-app chat for joined events
+
+    Group chat thread tied to event page
+
+🧠 Smart Recommendations
+
+Suggest events based on user history
+
+“Start a game near you” prompt if no events found
+
+    Suggested verified locations when hosting
+
+💼 PHASE 3: Business-Ready Features
+
+    💰 Goal: Monetize and partner with organizations/venues.
+
+🏢 Verified Venues + Premium Listings
+
+Directory of gyms, rec centers, and private courts
+
+Featured listings (paid placement or partner accounts)
+
+    Venue verification and partner profile system
+
+🧑‍⚖️ Legal & Safety Enhancements
+
+Underage reporting system
+
+Report event/user functionality
+
+    Background check option (via Checkr, Persona)
+
+🌱 Growth & Community Tools
+
+Referral system (earn points for inviting friends)
+
+Weekly game highlights & player recognition
+
+Social media share integration: “I’m running at XYZ court today”
