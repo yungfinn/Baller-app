@@ -1,9 +1,16 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Link } from "wouter";
 
 export default function Landing() {
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
   const handleLogin = () => {
-    window.location.href = "/api/login";
+    if (acceptedTerms) {
+      window.location.href = "/api/login";
+    }
   };
 
   return (
@@ -55,20 +62,34 @@ export default function Landing() {
               </div>
             </div>
             
+            {/* Terms of Use Checkbox */}
+            <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
+              <Checkbox 
+                id="terms-checkbox"
+                checked={acceptedTerms}
+                onCheckedChange={setAcceptedTerms}
+                className="mt-0.5"
+              />
+              <label htmlFor="terms-checkbox" className="text-sm text-gray-700 leading-relaxed cursor-pointer">
+                I agree to the{" "}
+                <Link href="/terms-of-use" className="text-primary underline hover:text-primary/80">
+                  Terms of Use
+                </Link>
+                {" "}and acknowledge that I understand the risks associated with sports activities.
+              </label>
+            </div>
+            
             <Button 
               onClick={handleLogin}
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl"
+              disabled={!acceptedTerms}
+              className={`w-full h-12 font-semibold rounded-xl transition-all ${
+                acceptedTerms 
+                  ? 'bg-primary hover:bg-primary/90 text-white' 
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
             >
               Get Started
             </Button>
-            
-            <p className="text-xs text-gray-500 text-center">
-              By signing up, you agree to our{" "}
-              <a href="/terms" className="text-red-500 underline hover:text-red-600">
-                Terms of Use
-              </a>
-              .
-            </p>
             
             <p className="text-xs text-gray-400 text-center mt-2">
               Join thousands of athletes finding their next game
