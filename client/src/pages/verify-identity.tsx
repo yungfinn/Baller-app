@@ -66,14 +66,13 @@ export default function VerifyIdentity() {
         reader.readAsDataURL(data.file);
       });
 
-      return apiRequest({
+      return apiRequest("/api/verification/upload", {
         method: "POST",
-        url: "/api/verification/upload",
-        body: {
+        body: JSON.stringify({
           documentType: data.documentType,
           fileName: data.file.name,
           fileUrl: fileUrl,
-        },
+        }),
       });
     },
     onSuccess: () => {
