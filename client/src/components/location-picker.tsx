@@ -31,7 +31,7 @@ export default function LocationPicker({ onLocationSelect, selectedLocation }: L
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
   // Fetch verified locations from database
-  const { data: verifiedLocations = [] } = useQuery({
+  const { data: verifiedLocations = [] } = useQuery<Location[]>({
     queryKey: ["/api/locations", { status: "approved" }],
     enabled: isMapVisible,
   });
