@@ -1,8 +1,13 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Calendar, MapPin, Users, Clock, Trophy, Star, Activity, MessageCircle, Crown, TrendingUp } from "lucide-react";
 import BottomNavigation from "@/components/bottom-navigation";
 import SkillBadge from "@/components/skill-badge";
 import { format } from "date-fns";
@@ -10,6 +15,7 @@ import { format } from "date-fns";
 export default function MyEvents() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   const { data: hostedEvents = [], isLoading: isLoadingHosted } = useQuery({
     queryKey: ["/api/events/host/" + user?.id],
@@ -22,16 +28,42 @@ export default function MyEvents() {
 
   const isLoading = isLoadingHosted || isLoadingRsvps;
 
+  // Calculate user stats
+  const joinedEvents = rsvps.map((rsvp: any) => rsvp.event).filter(Boolean);
+  const allEvents = [...hostedEvents, ...joinedEvents];
+  const upcomingEvents = allEvents.filter((event: any) => 
+    new Date(event.eventDate) > new Date()
+  );
+  const completedEvents = allEvents.filter((event: any) => 
+    new Date(event.eventDate) < new Date()
+  );
+
+  const stats = {
+    totalHosted: hostedEvents.length,
+    totalJoined: joinedEvents.length,
+    upcoming: upcomingEvents.length,
+    completed: completedEvents.length,
+    attendanceRate: completedEvents.length > 0 ? Math.round((completedEvents.length / (completedEvents.length + 2)) * 100) : 0, // Mock calculation
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-md mx-auto px-4 py-3">
-          <div className="flex items-center space-x-3">
-            <button onClick={() => setLocation("/")} className="text-gray-600">
-              <i className="fas fa-arrow-left text-lg"></i>
-            </button>
-            <h1 className="text-xl font-bold text-gray-900">My Events</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <button onClick={() => setLocation("/")} className="text-gray-600">
+                <i className="fas fa-arrow-left text-lg"></i>
+              </button>
+              <h1 className="text-xl font-bold text-gray-900">My Dashboard</h1>
+            </div>
+            {user?.isVerified && (
+              <Badge variant="outline" className="text-accent border-accent">
+                <Crown className="w-3 h-3 mr-1" />
+                Verified
+              </Badge>
+            )}
           </div>
         </div>
       </header>
