@@ -3,6 +3,7 @@ import {
   events,
   eventRsvps,
   userSwipes,
+  verificationDocuments,
   type User,
   type UpsertUser,
   type Event,
@@ -11,6 +12,8 @@ import {
   type InsertRsvp,
   type UserSwipe,
   type InsertUserPreferences,
+  type InsertVerificationDocument,
+  type VerificationDocument,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql, desc, asc, inArray, notInArray } from "drizzle-orm";
@@ -49,6 +52,12 @@ export interface IStorage {
   // Swipe operations
   recordSwipe(userId: string, eventId: number, direction: string): Promise<UserSwipe>;
   getUserSwipes(userId: string): Promise<UserSwipe[]>;
+  
+  // Identity verification operations
+  uploadVerificationDocument(document: InsertVerificationDocument): Promise<VerificationDocument>;
+  getUserVerificationDocuments(userId: string): Promise<VerificationDocument[]>;
+  updateVerificationStatus(userId: string, status: string, reviewNotes?: string, reviewedBy?: string): Promise<User>;
+  getVerificationDocumentsByType(userId: string, documentType: string): Promise<VerificationDocument[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -275,6 +284,63 @@ export class DatabaseStorage implements IStorage {
       .from(userSwipes)
       .where(eq(userSwipes.userId, userId))
       .orderBy(desc(userSwipes.swipedAt));
+  }
+
+  // Identity verification operations
+  async uploadVerificationDocument(document: InsertVerificationDocument): Promise<VerificationDocument> {
+    const [newDocument] = await db
+      .insert(verificationDocuments)
+      .values(document)
+      .returning();
+    return newDocument;
+  }
+
+  async getUserVerificationDocuments(userId: string): Promise<VerificationDocument[]> {
+    return await db
+      .select()
+      .from(verificationDocuments)
+      .where(eq(verificationDocuments.userId, userId))
+      .orderBy(desc(verificationDocuments.uploadedAt));
+  }
+
+  async updateVerificationStatus(userId: string, status: string, reviewNotes?: string, reviewedBy?: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        verificationStatus: status,
+        isVerified: status === "verified",
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    // If review notes are provided, update the documents
+    if (reviewNotes || reviewedBy) {
+      await db
+        .update(verificationDocuments)
+        .set({
+          reviewStatus: status === "verified" ? "approved" : "rejected",
+          reviewNotes,
+          reviewedBy,
+          verifiedAt: status === "verified" ? new Date() : null,
+        })
+        .where(eq(verificationDocuments.userId, userId));
+    }
+
+    return user;
+  }
+
+  async getVerificationDocumentsByType(userId: string, documentType: string): Promise<VerificationDocument[]> {
+    return await db
+      .select()
+      .from(verificationDocuments)
+      .where(
+        and(
+          eq(verificationDocuments.userId, userId),
+          eq(verificationDocuments.documentType, documentType)
+        )
+      )
+      .orderBy(desc(verificationDocuments.uploadedAt));
   }
 }
 

@@ -35,6 +35,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Verification routes
+  app.post('/api/verification/upload', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { documentType, fileName, fileUrl } = req.body;
+      
+      const document = await storage.uploadVerificationDocument({
+        userId,
+        documentType,
+        fileName,
+        fileUrl,
+      });
+      
+      res.json(document);
+    } catch (error) {
+      console.error("Error uploading verification document:", error);
+      res.status(500).json({ message: "Failed to upload verification document" });
+    }
+  });
+
+  app.get('/api/verification/documents', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const documents = await storage.getUserVerificationDocuments(userId);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching verification documents:", error);
+      res.status(500).json({ message: "Failed to fetch verification documents" });
+    }
+  });
+
+  app.patch('/api/verification/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { status } = req.body;
+      
+      const user = await storage.updateVerificationStatus(userId, status);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating verification status:", error);
+      res.status(500).json({ message: "Failed to update verification status" });
+    }
+  });
+
   // Event routes
   app.get('/api/events', isAuthenticated, async (req: any, res) => {
     try {
