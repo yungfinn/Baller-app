@@ -266,6 +266,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Location submission routes
+  app.post("/api/locations", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const locationData = { ...req.body, submittedBy: userId };
+
+      const location = await storage.submitLocation(locationData);
+      res.json(location);
+    } catch (error) {
+      console.error("Error submitting location:", error);
+      res.status(500).json({ message: "Failed to submit location" });
+    }
+  });
+
+  app.get("/api/locations", isAuthenticated, async (req: any, res) => {
+    try {
+      const { status, locationType, submittedBy } = req.query;
+      const locations = await storage.getLocations({
+        status: status as string,
+        locationType: locationType as string,
+        submittedBy: submittedBy as string,
+      });
+      res.json(locations);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+      res.status(500).json({ message: "Failed to fetch locations" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
