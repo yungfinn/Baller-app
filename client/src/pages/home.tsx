@@ -133,13 +133,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* Floating Action Button */}
-      <button 
-        onClick={() => setLocation("/create-event")}
-        className="floating-btn fixed bottom-20 right-4 w-14 h-14 bg-primary rounded-full text-white shadow-lg z-50 flex items-center justify-center"
-      >
-        <i className="fas fa-plus text-xl"></i>
-      </button>
+
 
       {/* Bottom Navigation */}
       <BottomNavigation activePage="discover" />

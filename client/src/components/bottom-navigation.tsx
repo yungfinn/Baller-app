@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 
 interface BottomNavigationProps {
-  activePage: "discover" | "my-events" | "map" | "profile";
+  activePage: "discover" | "my-events" | "create" | "profile";
 }
 
 export default function BottomNavigation({ activePage }: BottomNavigationProps) {
@@ -21,10 +21,10 @@ export default function BottomNavigation({ activePage }: BottomNavigationProps) 
       path: "/my-events",
     },
     {
-      key: "map",
-      label: "Map",
-      icon: "fas fa-map-marker-alt",
-      path: "/map",
+      key: "create",
+      label: "Create",
+      icon: "fas fa-plus",
+      path: "/create-event",
     },
     {
       key: "profile",

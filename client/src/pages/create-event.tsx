@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertEventSchema, type InsertEvent } from "@shared/schema";
+import BottomNavigation from "@/components/bottom-navigation";
 
 export default function CreateEvent() {
   const [, setLocation] = useLocation();
@@ -281,6 +282,8 @@ export default function CreateEvent() {
           </form>
         </Form>
       </div>
+
+      <BottomNavigation activePage="create" />
     </div>
   );
 }
