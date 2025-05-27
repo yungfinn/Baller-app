@@ -34,6 +34,7 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/terms" component={TermsOfUse} />
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
@@ -45,7 +46,6 @@ function Router() {
           <Route path="/profile" component={Profile} />
           <Route path="/verify-identity" component={VerifyIdentity} />
           <Route path="/submit-location" component={SubmitLocation} />
-          <Route path="/terms" component={TermsOfUse} />
         </>
       )}
       <Route component={NotFound} />
