@@ -295,6 +295,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes
+  app.get("/api/admin/locations", isAuthenticated, async (req: any, res) => {
+    try {
+      const { status } = req.query;
+      const locations = await storage.getLocations({ 
+        status: status as string || "pending" 
+      });
+      res.json(locations);
+    } catch (error) {
+      console.error("Error fetching locations for admin:", error);
+      res.status(500).json({ message: "Failed to fetch locations" });
+    }
+  });
+
+  app.post("/api/admin/locations/:id/review", isAuthenticated, async (req: any, res) => {
+    try {
+      const locationId = parseInt(req.params.id);
+      const { status, reviewNotes } = req.body;
+      const reviewerId = req.user.claims.sub;
+
+      const location = await storage.updateLocationStatus(
+        locationId, 
+        status, 
+        reviewNotes, 
+        reviewerId
+      );
+      
+      res.json(location);
+    } catch (error) {
+      console.error("Error reviewing location:", error);
+      res.status(500).json({ message: "Failed to review location" });
+    }
+  });
+
+  app.get("/api/admin/verification-documents", isAuthenticated, async (req: any, res) => {
+    try {
+      // Get all pending verification documents - we'll need to enhance storage method
+      const documents: any[] = []; // Placeholder for now
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching verification documents:", error);
+      res.status(500).json({ message: "Failed to fetch verification documents" });
+    }
+  });
+
+  app.post("/api/admin/users/:userId/verification", isAuthenticated, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { status, reviewNotes } = req.body;
+      const reviewerId = req.user.claims.sub;
+
+      const user = await storage.updateVerificationStatus(
+        userId, 
+        status, 
+        reviewNotes, 
+        reviewerId
+      );
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating verification status:", error);
+      res.status(500).json({ message: "Failed to update verification status" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
