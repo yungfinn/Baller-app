@@ -12,11 +12,18 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertEventSchema, type InsertEvent } from "@shared/schema";
 import BottomNavigation from "@/components/bottom-navigation";
+import LocationPicker from "@/components/location-picker";
 
 export default function CreateEvent() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedLocation, setSelectedLocation] = useState<{
+    name: string;
+    address: string;
+    latitude: string;
+    longitude: string;
+  } | null>(null);
 
   const form = useForm<InsertEvent>({
     resolver: zodResolver(insertEventSchema),

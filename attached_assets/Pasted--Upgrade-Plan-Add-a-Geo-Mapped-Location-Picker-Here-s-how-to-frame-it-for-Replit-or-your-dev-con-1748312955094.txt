@@ -1,0 +1,48 @@
+🌍 Upgrade Plan: Add a Geo-Mapped Location Picker
+
+Here’s how to frame it for Replit or your dev console:
+
+    “We’d like to implement a map-based location picker in Baller. Instead of users typing an address when creating an event, we want them to tap a location pin on a map to select from verified locations (like Washington County Regional Park), or drop a custom pin to host somewhere new. Map should show all verified: true locations from the database.”
+
+✅ Core Features to Implement
+📌 1. Interactive Map for Event Creation
+
+    Display map on the "Create Event" screen
+
+    Auto-load pins for all verified locations from the database
+
+    Allow users to tap a pin to auto-fill location details (name, address, lat/lng)
+
+🗺️ 2. “Drop a Pin” for Custom Locations
+
+    Optional: let verified users drop a pin on the map (lat/lng)
+
+    Fill address via reverse geocoding (Google Maps API or OpenStreetMap)
+
+    Store new location request as pending: true until reviewed
+
+🧠 3. Filter/Search by Radius or Type
+
+    Use geolocation to show nearby locations within a radius
+
+    Dropdown to filter by type (e.g., “public park,” “indoor gym”)
+
+🧰 Suggested Tools for Replit Implementation
+Tool	Purpose
+Mapbox GL JS or Google Maps API	Map display & interaction
+Firebase/Supabase/Postgres	Pull verified locations with geo data
+Geocoder API	Convert pin drop to address
+React Hook Form or Context	Update form with selected location
+🔁 Updated UI Flow (for Create Event Page)
+
+    🗺️ User sees full-screen map with pins
+
+    📍 Taps on a verified location
+
+    📥 Location name/address auto-fill in form
+
+    ➕ Can click “Add Custom Location” to drop a new pin if verified
+
+💬 Bonus Tip (Framing for Replit Dev Chat):
+
+    “Let’s replace the manual text field with a map component. Pull from the locations table where verified: true. On pin select, populate the form with that location’s name/address/coordinates. Include ability to add new pin and reverse geocode for address. Ideal UX is similar to Airbnb’s location picker or Uber’s pickup pin.”
