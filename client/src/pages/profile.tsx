@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Shield, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import BottomNavigation from "@/components/bottom-navigation";
 
 export default function Profile() {
@@ -54,6 +55,83 @@ export default function Profile() {
                 <i className="fas fa-shield-check mr-1"></i>
                 Verified
               </Badge>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Identity Verification Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Shield className="w-5 h-5 text-red-500" />
+              <span>Identity Verification</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {user?.isVerified ? (
+              <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-green-900">Verified Player</h3>
+                  <p className="text-sm text-green-700">Your identity has been verified</p>
+                </div>
+                <Badge className="bg-green-100 text-green-800 border-green-200">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Verified
+                </Badge>
+              </div>
+            ) : user?.verificationStatus === "pending" ? (
+              <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-yellow-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-yellow-900">Verification Pending</h3>
+                  <p className="text-sm text-yellow-700">Your documents are being reviewed</p>
+                </div>
+                <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Pending
+                </Badge>
+              </div>
+            ) : user?.verificationStatus === "rejected" ? (
+              <div className="flex items-center space-x-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-red-900">Verification Required</h3>
+                  <p className="text-sm text-red-700">Please resubmit your verification documents</p>
+                </div>
+                <Button 
+                  onClick={() => setLocation("/verify-identity")}
+                  size="sm"
+                  className="bg-red-500 hover:bg-red-600 text-white"
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-blue-900">Build Trust</h3>
+                    <p className="text-sm text-blue-700">Verify your identity to unlock premium features and build trust with other players</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => setLocation("/verify-identity")}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Start Verification
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
