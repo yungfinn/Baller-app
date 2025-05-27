@@ -40,6 +40,12 @@ export const users = pgTable("users", {
   searchRadius: integer("search_radius").default(25), // in miles
   isVerified: boolean("is_verified").default(false),
   
+  // Identity Verification
+  verificationStatus: varchar("verification_status").default("unverified"), // unverified, pending, verified, rejected
+  phoneNumber: varchar("phone_number"),
+  phoneVerified: boolean("phone_verified").default(false),
+  dateOfBirth: timestamp("date_of_birth"),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -88,11 +94,26 @@ export const userSwipes = pgTable("user_swipes", {
   swipedAt: timestamp("swiped_at").defaultNow(),
 });
 
+// Identity Verification Documents
+export const verificationDocuments = pgTable("verification_documents", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  documentType: varchar("document_type").notNull(), // "selfie", "id_front", "id_back"
+  fileName: varchar("file_name").notNull(),
+  fileUrl: varchar("file_url").notNull(), // Secure URL to uploaded document
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  verifiedAt: timestamp("verified_at"),
+  reviewStatus: varchar("review_status").default("pending"), // pending, approved, rejected
+  reviewNotes: text("review_notes"),
+  reviewedBy: varchar("reviewed_by"), // Admin user ID who reviewed
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   hostedEvents: many(events),
   rsvps: many(eventRsvps),
   swipes: many(userSwipes),
+  verificationDocuments: many(verificationDocuments),
 }));
 
 export const eventsRelations = relations(events, ({ one, many }) => ({
@@ -123,6 +144,13 @@ export const userSwipesRelations = relations(userSwipes, ({ one }) => ({
   event: one(events, {
     fields: [userSwipes.eventId],
     references: [events.id],
+  }),
+}));
+
+export const verificationDocumentsRelations = relations(verificationDocuments, ({ one }) => ({
+  user: one(users, {
+    fields: [verificationDocuments.userId],
+    references: [users.id],
   }),
 }));
 
@@ -158,9 +186,19 @@ export const insertRsvpSchema = createInsertSchema(eventRsvps).omit({
   joinedAt: true,
 });
 
+// Verification document schema
+export const insertVerificationDocumentSchema = createInsertSchema(verificationDocuments).omit({
+  id: true,
+  uploadedAt: true,
+  verifiedAt: true,
+  reviewedBy: true,
+});
+
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 export type InsertRsvp = z.infer<typeof insertRsvpSchema>;
+export type InsertVerificationDocument = z.infer<typeof insertVerificationDocumentSchema>;
 export type Event = typeof events.$inferSelect;
 export type EventRsvp = typeof eventRsvps.$inferSelect;
 export type UserSwipe = typeof userSwipes.$inferSelect;
+export type VerificationDocument = typeof verificationDocuments.$inferSelect;
