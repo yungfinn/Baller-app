@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -34,7 +35,7 @@ export default function CreateEvent() {
       skillLevel: "",
       maxPlayers: 8,
       locationName: "",
-      eventDate: "",
+      eventDate: new Date(),
       eventTime: "",
       notes: "",
     },
@@ -61,6 +62,18 @@ export default function CreateEvent() {
       });
     },
   });
+
+  const handleLocationSelect = (location: {
+    name: string;
+    address: string;
+    latitude: string;
+    longitude: string;
+  }) => {
+    setSelectedLocation(location);
+    form.setValue("locationName", location.name);
+    form.setValue("latitude", location.latitude);
+    form.setValue("longitude", location.longitude);
+  };
 
   const onSubmit = (data: InsertEvent) => {
     // Convert date and time to proper format  
@@ -191,19 +204,20 @@ export default function CreateEvent() {
                 <CardTitle className="text-lg">When & Where</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="locationName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Central Park Basketball Courts" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Location
+                  </label>
+                  <LocationPicker 
+                    onLocationSelect={handleLocationSelect}
+                    selectedLocation={selectedLocation}
+                  />
+                  {selectedLocation && (
+                    <div className="text-sm text-green-600 bg-green-50 p-2 rounded border">
+                      Selected: {selectedLocation.name}
+                    </div>
                   )}
-                />
+                </div>
 
                 <FormField
                   control={form.control}
