@@ -63,6 +63,14 @@ export default function Landing() {
             </Button>
             
             <p className="text-xs text-gray-500 text-center">
+              By signing up, you agree to our{" "}
+              <a href="/terms" className="text-red-500 underline hover:text-red-600">
+                Terms of Use
+              </a>
+              .
+            </p>
+            
+            <p className="text-xs text-gray-400 text-center mt-2">
               Join thousands of athletes finding their next game
             </p>
           </CardContent>
