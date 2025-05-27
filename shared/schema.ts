@@ -261,3 +261,12 @@ export const insertLocationSchema = createInsertSchema(locations).omit({
 
 export type InsertLocation = z.infer<typeof insertLocationSchema>;
 export type Location = typeof locations.$inferSelect;
+
+// Event message schemas and types
+export const insertEventMessageSchema = createInsertSchema(eventMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertEventMessage = z.infer<typeof insertEventMessageSchema>;
+export type EventMessage = typeof eventMessages.$inferSelect;
