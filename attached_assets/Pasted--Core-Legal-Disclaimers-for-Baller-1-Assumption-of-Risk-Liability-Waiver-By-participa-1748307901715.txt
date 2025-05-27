@@ -1,0 +1,37 @@
+📜 Core Legal Disclaimers for Baller
+🛡️ 1. Assumption of Risk & Liability Waiver
+
+    “By participating in events organized through the Baller platform, users acknowledge and accept all inherent risks of physical activity. Baller is not responsible for injuries, accidents, damages, or losses that occur during any user-hosted or third-party event.”
+
+🚧 2. Event Access Disclaimer
+
+    “Baller does not guarantee that listed venues are available, permitted, or reserved for any given event unless specifically contracted between Baller and the venue. It is the host’s responsibility to ensure appropriate permissions or permits are obtained when necessary.”
+
+🧾 3. Age Verification Statement
+
+    “All users must be 18 years of age or older to register. Participation by minors is not endorsed, authorized, or supported by Baller. Users who allow minors to participate assume full legal responsibility.”
+
+📍 4. Third-Party Locations Disclaimer
+
+    “Baller may reference or display public and private locations submitted by users. The platform does not own, operate, or manage these venues and cannot guarantee their condition, safety, or legality for organized use.”
+
+✅ Additional Recommended Clauses
+📱 5. User Conduct Clause
+
+    “Users are responsible for their behavior at all events. Harassment, violence, discrimination, or illegal activity may result in account suspension or legal action.”
+
+🔄 6. Cancellation/No-Show Policy
+
+    “Baller does not guarantee attendance to events and is not liable for changes, cancellations, or user no-shows. Hosts are responsible for communicating updates.”
+
+🧠 7. Host Responsibility Agreement
+
+    “By hosting an event on Baller, you agree to abide by local laws, ordinances, and park regulations, and to ensure that participation does not violate any rules associated with the chosen venue.”
+
+🔐 8. Data Security & Privacy
+
+    “User information, including ID and photo verification data, is stored securely and only used for verification purposes. Baller complies with all applicable data privacy laws and does not sell personal information.”
+
+⚠️ User-Facing Summary (To Show Before Hosting or Joining)
+
+    “Please note: Baller is a platform for connecting athletes. We do not control the venues or the events, and participation is at your own risk. You must be 18+, or legally responsible for any underage individuals you involve. Always respect local laws and play safe.”
