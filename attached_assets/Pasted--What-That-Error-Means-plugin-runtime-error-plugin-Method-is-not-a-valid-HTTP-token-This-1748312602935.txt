@@ -1,0 +1,63 @@
+🚨 What That Error Means:
+
+    [plugin:runtime-error-plugin] Method is not a valid HTTP token.
+
+This usually points to a malformed HTTP request — typically from:
+
+    A bad file name (e.g., with illegal characters or spaces)
+
+    A missing HTTP method (e.g., using an invalid fetch() call or axios config)
+
+    An issue with the upload API endpoint (e.g., invalid header or MIME type)
+
+✅ How to Proceed (Dev Override, the Right Way)
+1. Fix the Bug First
+
+Even as devs, it’s better to test the full flow properly than bypass it. Here’s what to check:
+
+    ✅ Make sure the image you’re uploading has no special characters or spaces in the file name (rename it to something like park-photo.jpg)
+
+    ✅ If you’re using fetch(), check that your method is set:
+
+method: 'POST',  // not blank or malformed
+
+    ✅ If you’re using Axios:
+
+axios.post('/api/upload', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+})
+
+If you're still getting the error, I can help you debug the exact code.
+🛠️ Option 2: Manually Add the Location (As Devs)
+
+If this is just a dev-side insert into the database (bypassing user flow), yes — you can add a verified location manually. Here’s how to phrase it for Replit:
+
+    “We’re the developers of this app and want to manually add a verified location to the database without going through the frontend image upload flow. The image upload endpoint is erroring out during testing, so we’d like to either:
+
+        Temporarily skip verification fields, or
+
+        Inject the data directly into Firestore/Supabase/Postgres for dev testing purposes.”
+
+This can be done by:
+
+    Commenting out the verification check for dev mode:
+
+if (process.env.NODE_ENV !== 'development') {
+  // require selfie and ID
+}
+
+    Creating a simple admin-only route like:
+
+POST /admin/add-location
+{
+  "name": "Regional County Park",
+  "address": "123 Park Ave, Hagerstown, MD",
+  "verified": true,
+  "host": "admin"
+}
+
+🛡️ Important Reminder
+
+Make sure to re-enable the checks for all non-dev accounts or production deployments. Always protect routes with:
+
+if (!req.user.isAdmin) return res.status(403).send("Not allowed")
