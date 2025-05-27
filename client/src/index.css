@@ -3,51 +3,53 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 20 14.3% 4.1%;
-  --muted: 60 4.8% 95.9%;
-  --muted-foreground: 25 5.3% 44.7%;
+  /* Baller Brand Colors - Red/White Theme */
+  --background: 0 0% 100%; /* Pure white */
+  --foreground: 0 0% 9%; /* Near black */
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
   --popover: 0 0% 100%;
-  --popover-foreground: 20 14.3% 4.1%;
+  --popover-foreground: 0 0% 9%;
   --card: 0 0% 100%;
-  --card-foreground: 20 14.3% 4.1%;
-  --border: 20 5.9% 90%;
-  --input: 20 5.9% 90%;
-  --primary: 18 85% 60%; /* #FF6B35 */
-  --primary-foreground: 211 100% 99%;
-  --secondary: 212 100% 27%; /* #004E89 */
-  --secondary-foreground: 0 0% 98%;
-  --accent: 142 71% 45%; /* #00C851 */
+  --card-foreground: 0 0% 9%;
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --primary: 0 84% 60%; /* Baller Red #EF4444 */
+  --primary-foreground: 0 0% 98%;
+  --secondary: 0 0% 96%; /* Light gray */
+  --secondary-foreground: 0 0% 9%;
+  --accent: 0 84% 60%; /* Baller Red accent */
   --accent-foreground: 0 0% 98%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 60 9.1% 97.8%;
-  --warning: 48 100% 50%; /* #FFB400 */
-  --danger: 354 70% 54%; /* #FF3547 */
-  --ring: 20 14.3% 4.1%;
-  --radius: 0.5rem;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --warning: 45 93% 47%; /* Orange */
+  --danger: 0 84% 60%; /* Baller Red */
+  --ring: 0 84% 60%;
+  --radius: 0.75rem;
 }
 
 .dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --popover: 240 10% 3.9%;
+  /* Dark theme with Baller branding */
+  --background: 0 0% 9%; /* Dark background */
+  --foreground: 0 0% 98%; /* Light text */
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 65%;
+  --popover: 0 0% 11%;
   --popover-foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
+  --card: 0 0% 11%;
   --card-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --primary: 18 85% 60%;
-  --primary-foreground: 211 100% 99%;
-  --secondary: 240 3.7% 15.9%;
+  --border: 0 0% 15%;
+  --input: 0 0% 15%;
+  --primary: 0 84% 60%; /* Keep Baller Red */
+  --primary-foreground: 0 0% 98%;
+  --secondary: 0 0% 15%;
   --secondary-foreground: 0 0% 98%;
-  --accent: 240 3.7% 15.9%;
+  --accent: 0 84% 60%;
   --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
-  --ring: 240 4.9% 83.9%;
-  --radius: 0.5rem;
+  --ring: 0 84% 60%;
+  --radius: 0.75rem;
 }
 
 @layer base {
@@ -57,8 +59,20 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overscroll-behavior: none;
+  }
+  
+  /* Baller Brand Typography */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+  }
+  
+  .font-baller {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
 }
 

@@ -11,11 +11,11 @@ export default function Landing() {
       <div className="w-full max-w-md space-y-8">
         {/* Logo and Title */}
         <div className="text-center space-y-4">
-          <div className="w-20 h-20 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto shadow-lg">
-            <i className="fas fa-futbol text-white text-2xl"></i>
+          <div className="w-20 h-20 bg-gradient-to-r from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+            <i className="fas fa-basketball-ball text-white text-2xl"></i>
           </div>
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">SportMate</h1>
+            <h1 className="text-4xl font-baller text-gray-900 mb-2">Baller</h1>
             <p className="text-lg text-gray-600">Find your perfect game</p>
           </div>
         </div>
