@@ -1,0 +1,58 @@
+🏞️ 1. Can Users Coordinate at Public Places Like Parks?
+✅ Generally Yes — If:
+
+    It’s a public park, court, or field that doesn’t require a permit for casual use
+
+    Group size is under local permit thresholds (usually <25-50 people)
+
+    No money is exchanged (e.g. for tickets or paid entry)
+
+    The event isn’t blocking other public users
+
+⚠️ May Require Permission If:
+
+    It's a school field or gym — even if open, it's not truly public
+
+    Lights, restrooms, or staff are needed (reservation required)
+
+    The group is charging money, using branding, or bringing outside vendors (like food trucks)
+
+🛑 2. Locations You Should Not Allow by Default
+
+    Private schools, rec centers, or gyms without formal partnership
+
+    Businesses (gyms, complexes) unless they’ve signed up as verified hosts
+
+    Restricted-access venues (gated fields, members-only clubs)
+
+✅ 3. Recommended Submission Requirements
+📍 When a User Submits a Location:
+
+    Ask: “Is this a public space available for free use?”
+
+    Require: Pin-drop or address + type of venue (park, gym, school, etc.)
+
+    Optional: Upload 1 photo to verify condition/visibility of space
+
+    Show: “Pending Review” until it’s manually approved (or auto-approved if public)
+
+🧾 Optional Additional Checks:
+
+    Add a checkbox: “I confirm this location does not require a reservation or permit for casual group play under 25 people.”
+
+    Warn: “Hosts are responsible for understanding any local restrictions.”
+
+🛡️ 4. Should Baller Screen Locations?
+
+Yes — with tiers.
+Tier	Type	Approval Method
+Tier 1	Verified Public Parks	Auto-approved if matched to known database
+Tier 2	User-submitted spots (parks/schools)	Manual review by Baller mod/admin
+Tier 3	Private/commercial venues	Only approved if Baller has permission/license agreement
+🚀 Future-Proofing Ideas:
+
+    Integrate with Google Places API to verify real public parks/courts
+
+    Offer “Verified Host Locations” with logos and perks for gyms, centers, etc.
+
+    Build a report button on all locations so players can flag outdated or invalid venues

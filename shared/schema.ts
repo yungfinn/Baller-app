@@ -108,12 +108,39 @@ export const verificationDocuments = pgTable("verification_documents", {
   reviewedBy: varchar("reviewed_by"), // Admin user ID who reviewed
 });
 
+// Location submissions and management
+export const locations = pgTable("locations", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+  address: varchar("address").notNull(),
+  latitude: decimal("latitude", { precision: 10, scale: 8 }).notNull(),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }).notNull(),
+  locationType: varchar("location_type").notNull(), // 'public_park', 'school', 'gym', 'court', 'field', 'other'
+  photoUrl: varchar("photo_url"),
+  description: text("description"),
+  submittedBy: varchar("submitted_by").notNull().references(() => users.id),
+  status: varchar("status").default("pending"), // 'pending', 'approved', 'rejected'
+  approvalTier: varchar("approval_tier").default("tier_2"), // 'tier_1' (auto), 'tier_2' (manual), 'tier_3' (partnership)
+  reviewNotes: text("review_notes"),
+  reviewedBy: varchar("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at"),
+  isPublicSpace: boolean("is_public_space").default(false),
+  requiresPermit: boolean("requires_permit").default(false),
+  maxCapacity: integer("max_capacity"),
+  amenities: text("amenities").array(), // ['parking', 'restrooms', 'lights', 'water_fountain']
+  operatingHours: varchar("operating_hours"), // 'dawn_to_dusk', '24_hours', 'custom'
+  contactInfo: varchar("contact_info"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   hostedEvents: many(events),
   rsvps: many(eventRsvps),
   swipes: many(userSwipes),
   verificationDocuments: many(verificationDocuments),
+  submittedLocations: many(locations),
 }));
 
 export const eventsRelations = relations(events, ({ one, many }) => ({
@@ -150,6 +177,13 @@ export const userSwipesRelations = relations(userSwipes, ({ one }) => ({
 export const verificationDocumentsRelations = relations(verificationDocuments, ({ one }) => ({
   user: one(users, {
     fields: [verificationDocuments.userId],
+    references: [users.id],
+  }),
+}));
+
+export const locationsRelations = relations(locations, ({ one }) => ({
+  submitter: one(users, {
+    fields: [locations.submittedBy],
     references: [users.id],
   }),
 }));
@@ -202,3 +236,18 @@ export type Event = typeof events.$inferSelect;
 export type EventRsvp = typeof eventRsvps.$inferSelect;
 export type UserSwipe = typeof userSwipes.$inferSelect;
 export type VerificationDocument = typeof verificationDocuments.$inferSelect;
+
+// Location schema
+export const insertLocationSchema = createInsertSchema(locations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  status: true,
+  approvalTier: true,
+  reviewNotes: true,
+  reviewedBy: true,
+  reviewedAt: true,
+});
+
+export type InsertLocation = z.infer<typeof insertLocationSchema>;
+export type Location = typeof locations.$inferSelect;
