@@ -73,14 +73,14 @@ export default function CreateEvent() {
             <button onClick={() => setLocation("/")} className="text-gray-600">
               <i className="fas fa-arrow-left text-lg"></i>
             </button>
-            <h1 className="text-xl font-bold text-gray-900">Create Event</h1>
+            <h1 className="text-xl font-baller text-gray-900">Create Event</h1>
           </div>
         </div>
       </header>
 
       <div className="max-w-md mx-auto p-4 space-y-6">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-gray-900">Host a Game</h2>
+          <h2 className="text-2xl font-baller text-gray-900">Host a Game</h2>
           <p className="text-gray-600">Bring people together for sports</p>
         </div>
 

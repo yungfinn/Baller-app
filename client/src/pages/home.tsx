@@ -57,10 +57,10 @@ export default function Home() {
         <div className="max-w-md mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
-                <i className="fas fa-futbol text-white text-sm"></i>
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
+                <i className="fas fa-basketball-ball text-white text-sm"></i>
               </div>
-              <h1 className="text-xl font-bold text-gray-900">SportMate</h1>
+              <h1 className="text-xl font-baller text-gray-900">Baller</h1>
             </div>
             
             <div className="flex items-center space-x-4">
