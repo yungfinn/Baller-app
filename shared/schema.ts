@@ -46,6 +46,10 @@ export const users = pgTable("users", {
   phoneVerified: boolean("phone_verified").default(false),
   dateOfBirth: timestamp("date_of_birth"),
   
+  // Rep system and premium features
+  repPoints: integer("rep_points").default(0),
+  userTier: varchar("user_tier").default("free"), // free, premium, pro
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -144,6 +148,17 @@ export const eventMessages = pgTable("event_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Rep point activities tracking
+export const repActivities = pgTable("rep_activities", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  activityType: varchar("activity_type").notNull(), // event_hosted, event_joined, event_completed, verified_identity
+  pointsEarned: integer("points_earned").notNull(),
+  relatedEventId: integer("related_event_id").references(() => events.id),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   hostedEvents: many(events),
@@ -151,6 +166,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   swipes: many(userSwipes),
   verificationDocuments: many(verificationDocuments),
   submittedLocations: many(locations),
+  repActivities: many(repActivities),
 }));
 
 export const eventsRelations = relations(events, ({ one, many }) => ({
@@ -195,6 +211,17 @@ export const locationsRelations = relations(locations, ({ one }) => ({
   submitter: one(users, {
     fields: [locations.submittedBy],
     references: [users.id],
+  }),
+}));
+
+export const repActivitiesRelations = relations(repActivities, ({ one }) => ({
+  user: one(users, {
+    fields: [repActivities.userId],
+    references: [users.id],
+  }),
+  event: one(events, {
+    fields: [repActivities.relatedEventId],
+    references: [events.id],
   }),
 }));
 
@@ -270,3 +297,12 @@ export const insertEventMessageSchema = createInsertSchema(eventMessages).omit({
 
 export type InsertEventMessage = z.infer<typeof insertEventMessageSchema>;
 export type EventMessage = typeof eventMessages.$inferSelect;
+
+// Rep activities types
+export const insertRepActivitySchema = createInsertSchema(repActivities).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertRepActivity = z.infer<typeof insertRepActivitySchema>;
+export type RepActivity = typeof repActivities.$inferSelect;
