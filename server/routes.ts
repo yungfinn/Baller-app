@@ -21,6 +21,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rep point routes
+  app.get('/api/user/rep-points', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const repPoints = await storage.getUserRepPoints(userId);
+      res.json({ repPoints });
+    } catch (error) {
+      console.error("Error fetching rep points:", error);
+      res.status(500).json({ message: "Failed to fetch rep points" });
+    }
+  });
+
+  app.get('/api/user/premium-access/:feature', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const feature = req.params.feature;
+      const hasAccess = await storage.checkPremiumAccess(userId, feature);
+      res.json({ hasAccess });
+    } catch (error) {
+      console.error("Error checking premium access:", error);
+      res.status(500).json({ message: "Failed to check premium access" });
+    }
+  });
+
   // User preferences routes
   app.put('/api/user/preferences', isAuthenticated, async (req: any, res) => {
     try {
@@ -118,12 +142,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/events', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      
+      // Check if user has premium access for same-day events
+      const eventDate = new Date(req.body.eventDate);
+      const today = new Date();
+      const isSameDay = eventDate.toDateString() === today.toDateString();
+      
+      if (isSameDay) {
+        const hasAccess = await storage.checkPremiumAccess(userId, 'same_day_events');
+        if (!hasAccess) {
+          return res.status(403).json({ 
+            message: "Same-day event creation requires premium access. Upgrade to unlock this feature!" 
+          });
+        }
+      }
+      
       const eventData = insertEventSchema.parse({
         ...req.body,
         hostId: userId,
       });
       
       const event = await storage.createEvent(eventData);
+      
+      // Award rep points for hosting an event
+      await storage.addRepPoints(
+        userId, 
+        'event_hosted', 
+        15, 
+        event.id, 
+        `Hosted event: ${event.title}`
+      );
+      
       res.status(201).json(event);
     } catch (error) {
       console.error("Error creating event:", error);
@@ -193,6 +242,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         status: status || 'interested',
       });
+      
+      // Award rep points for joining an event
+      if (status === 'going') {
+        const event = await storage.getEventById(eventId);
+        await storage.addRepPoints(
+          userId, 
+          'event_joined', 
+          5, 
+          eventId, 
+          `Joined event: ${event?.title || 'Unknown'}`
+        );
+      }
       
       res.status(201).json(rsvp);
     } catch (error) {

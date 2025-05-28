@@ -5,6 +5,7 @@ import {
   userSwipes,
   verificationDocuments,
   locations,
+  repActivities,
   type User,
   type UpsertUser,
   type Event,
@@ -17,6 +18,8 @@ import {
   type VerificationDocument,
   type Location,
   type InsertLocation,
+  type InsertRepActivity,
+  type RepActivity,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql, desc, asc, inArray, notInArray } from "drizzle-orm";
@@ -72,6 +75,12 @@ export interface IStorage {
   getLocationById(id: number): Promise<Location | undefined>;
   updateLocationStatus(id: number, status: string, reviewNotes?: string, reviewedBy?: string): Promise<Location>;
   deleteLocation(id: number): Promise<void>;
+  
+  // Rep point operations
+  addRepPoints(userId: string, activityType: string, points: number, relatedEventId?: number, description?: string): Promise<RepActivity>;
+  getUserRepPoints(userId: string): Promise<number>;
+  updateUserTier(userId: string, tier: string): Promise<User>;
+  checkPremiumAccess(userId: string, feature: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -422,6 +431,91 @@ export class DatabaseStorage implements IStorage {
 
   async deleteLocation(id: number): Promise<void> {
     await db.delete(locations).where(eq(locations.id, id));
+  }
+
+  // Rep point operations
+  async addRepPoints(userId: string, activityType: string, points: number, relatedEventId?: number, description?: string): Promise<RepActivity> {
+    // Create rep activity record
+    const [activity] = await db
+      .insert(repActivities)
+      .values({
+        userId,
+        activityType,
+        pointsEarned: points,
+        relatedEventId,
+        description,
+      })
+      .returning();
+
+    // Update user's total rep points
+    await db
+      .update(users)
+      .set({
+        repPoints: sql`${users.repPoints} + ${points}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    // Check if user qualifies for tier upgrade
+    const [user] = await db.select({ repPoints: users.repPoints }).from(users).where(eq(users.id, userId));
+    if (user) {
+      const newTier = this.calculateUserTier(user.repPoints);
+      const [currentUser] = await db.select({ userTier: users.userTier }).from(users).where(eq(users.id, userId));
+      
+      if (currentUser && currentUser.userTier !== newTier) {
+        await this.updateUserTier(userId, newTier);
+      }
+    }
+
+    return activity;
+  }
+
+  async getUserRepPoints(userId: string): Promise<number> {
+    const [user] = await db
+      .select({ repPoints: users.repPoints })
+      .from(users)
+      .where(eq(users.id, userId));
+    
+    return user?.repPoints || 0;
+  }
+
+  async updateUserTier(userId: string, tier: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        userTier: tier,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return user;
+  }
+
+  async checkPremiumAccess(userId: string, feature: string): Promise<boolean> {
+    const [user] = await db
+      .select({ userTier: users.userTier })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    if (!user) return false;
+
+    // Define premium features and their required tiers
+    const premiumFeatures = {
+      'same_day_events': ['premium', 'pro'],
+      'unlimited_events': ['pro'],
+      'priority_support': ['premium', 'pro'],
+      'advanced_filters': ['premium', 'pro'],
+    };
+
+    const requiredTiers = premiumFeatures[feature as keyof typeof premiumFeatures];
+    return requiredTiers ? requiredTiers.includes(user.userTier || 'free') : false;
+  }
+
+  private calculateUserTier(repPoints: number): string {
+    if (repPoints >= 1000) return 'pro';
+    if (repPoints >= 250) return 'premium';
+    return 'free';
   }
 }
 
