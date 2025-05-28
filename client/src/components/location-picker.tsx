@@ -29,6 +29,7 @@ export default function LocationPicker({ onLocationSelect, selectedLocation }: L
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [mapboxReady, setMapboxReady] = useState(false);
 
   // Fetch verified locations from database
   const { data: verifiedLocations = [] } = useQuery<Location[]>({

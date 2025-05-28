@@ -45,6 +45,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mapbox token endpoint
+  app.get('/api/mapbox-token', async (req, res) => {
+    try {
+      res.json({ token: process.env.MAPBOX_ACCESS_TOKEN || "" });
+    } catch (error) {
+      console.error("Error fetching Mapbox token:", error);
+      res.status(500).json({ message: "Failed to fetch Mapbox token" });
+    }
+  });
+
   // User preferences routes
   app.put('/api/user/preferences', isAuthenticated, async (req: any, res) => {
     try {
