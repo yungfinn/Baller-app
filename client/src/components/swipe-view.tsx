@@ -9,9 +9,11 @@ import type { Event } from "@shared/schema";
 
 interface SwipeViewProps {
   events: Event[];
+  userRsvps?: any[];
+  currentUserId?: string;
 }
 
-export default function SwipeView({ events }: SwipeViewProps) {
+export default function SwipeView({ events, userRsvps = [], currentUserId }: SwipeViewProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const { toast } = useToast();

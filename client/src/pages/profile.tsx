@@ -1,18 +1,58 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Shield, CheckCircle, Trophy, Star, Users, Calendar, AlertCircle } from "lucide-react";
 import BottomNavigation from "@/components/bottom-navigation";
 
 export default function Profile() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
+  const { data: userStats } = useQuery({
+    queryKey: ["/api/user/stats"],
+  });
+
+  const { data: hostedEvents = [] } = useQuery({
+    queryKey: ["/api/events/host", user?.id],
+  });
+
+  const { data: userRsvps = [] } = useQuery({
+    queryKey: ["/api/user/rsvps"],
+  });
+
   const handleLogout = () => {
     window.location.href = "/api/logout";
   };
+
+  const getTierInfo = (tier: string) => {
+    switch (tier) {
+      case 'pro':
+        return { name: 'Pro', color: 'bg-purple-500', icon: Trophy, points: '1000+' };
+      case 'premium':
+        return { name: 'Premium', color: 'bg-blue-500', icon: Star, points: '250-999' };
+      default:
+        return { name: 'Free', color: 'bg-gray-500', icon: Users, points: '0-249' };
+    }
+  };
+
+  const getProgressToNextTier = (repPoints: number) => {
+    if (repPoints < 250) {
+      return { nextTier: 'Premium', needed: 250 - repPoints, progress: (repPoints / 250) * 100 };
+    } else if (repPoints < 1000) {
+      return { nextTier: 'Pro', needed: 1000 - repPoints, progress: ((repPoints - 250) / 750) * 100 };
+    }
+    return { nextTier: 'Max Level', needed: 0, progress: 100 };
+  };
+
+  const currentTier = (user as any)?.tier || 'free';
+  const currentRepPoints = (userStats as any)?.repPoints || 0;
+  const tierInfo = getTierInfo(currentTier);
+  const TierIcon = tierInfo.icon;
+  const progress = getProgressToNextTier(currentRepPoints);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -34,205 +74,142 @@ export default function Profile() {
           <CardContent className="text-center pt-6">
             <div className="relative w-24 h-24 mx-auto mb-4">
               <img 
-                src={user?.profileImageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face"} 
+                src={(user as any)?.profileImageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face"} 
                 alt="Profile" 
                 className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
               />
-              {user?.isVerified && (
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-accent rounded-full border-2 border-white flex items-center justify-center">
-                  <i className="fas fa-check text-white text-xs"></i>
-                </div>
-              )}
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-accent rounded-full border-2 border-white flex items-center justify-center">
+                <CheckCircle className="w-3 h-3 text-white" />
+              </div>
             </div>
             
             <h2 className="text-xl font-bold text-gray-900 mb-1">
-              {user?.firstName} {user?.lastName}
+              {(user as any)?.firstName && (user as any)?.lastName 
+                ? `${(user as any).firstName} ${(user as any).lastName}` 
+                : 'Your Name'}
             </h2>
-            <p className="text-gray-600 mb-4">{user?.email}</p>
+            <p className="text-gray-600 mb-4">{(user as any)?.email || 'your.email@example.com'}</p>
             
-            {user?.isVerified && (
-              <Badge className="bg-accent/10 text-accent border-accent/20">
-                <i className="fas fa-shield-check mr-1"></i>
-                Verified
-              </Badge>
-            )}
+            {/* Rep Points & Tier Display */}
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <TierIcon className="w-5 h-5" />
+                  <span className="font-semibold">{tierInfo.name} Tier</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold">{currentRepPoints}</div>
+                  <div className="text-xs opacity-90">Rep Points</div>
+                </div>
+              </div>
+              
+              {/* Progress to Next Tier */}
+              {progress.nextTier !== 'Max Level' ? (
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>Progress to {progress.nextTier}</span>
+                    <span>{progress.needed} points needed</span>
+                  </div>
+                  <Progress value={progress.progress} className="h-2 bg-white/20" />
+                </div>
+              ) : (
+                <div className="text-center text-sm">
+                  <Trophy className="w-4 h-4 inline mr-1" />
+                  Maximum tier reached!
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
-        {/* Identity Verification Section */}
+        {/* Activity Statistics */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Shield className="w-5 h-5 text-red-500" />
-              <span>Identity Verification</span>
+              <Calendar className="w-5 h-5" />
+              <span>Activity Stats</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {user?.isVerified ? (
-              <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-green-900">Verified Player</h3>
-                  <p className="text-sm text-green-700">Your identity has been verified</p>
-                </div>
-                <Badge className="bg-green-100 text-green-800 border-green-200">
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  Verified
-                </Badge>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{Array.isArray(hostedEvents) ? hostedEvents.length : 0}</div>
+                <div className="text-sm text-gray-600">Events Hosted</div>
               </div>
-            ) : user?.verificationStatus === "pending" ? (
-              <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-yellow-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-yellow-900">Verification Pending</h3>
-                  <p className="text-sm text-yellow-700">Your documents are being reviewed</p>
-                </div>
-                <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                  <Clock className="w-3 h-3 mr-1" />
-                  Pending
-                </Badge>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{Array.isArray(userRsvps) ? userRsvps.length : 0}</div>
+                <div className="text-sm text-gray-600">Events Joined</div>
               </div>
-            ) : user?.verificationStatus === "rejected" ? (
-              <div className="flex items-center space-x-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertCircle className="w-5 h-5 text-red-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-red-900">Verification Required</h3>
-                  <p className="text-sm text-red-700">Please resubmit your verification documents</p>
-                </div>
-                <Button 
-                  onClick={() => setLocation("/verify-identity")}
-                  size="sm"
-                  className="bg-red-500 hover:bg-red-600 text-white"
-                >
-                  Retry
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-blue-900">Build Trust</h3>
-                    <p className="text-sm text-blue-700">Verify your identity to unlock premium features and build trust with other players</p>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => setLocation("/verify-identity")}
-                  className="w-full bg-red-500 hover:bg-red-600 text-white"
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Start Verification
-                </Button>
-              </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 
-        {/* User Preferences */}
+        {/* Rep Points History */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Preferences</CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setLocation("/preferences")}
-            >
-              <i className="fas fa-edit mr-2"></i>
-              Edit
-            </Button>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Trophy className="w-5 h-5" />
+              <span>How to Earn Rep Points</span>
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {user?.skillLevel && (
-              <div>
-                <h4 className="font-medium text-gray-900 mb-1">Skill Level</h4>
-                <Badge variant="outline" className="capitalize">
-                  {user.skillLevel}
-                </Badge>
-              </div>
-            )}
-            
-            {user?.sportsInterests && user.sportsInterests.length > 0 && (
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">Sports Interests</h4>
-                <div className="flex flex-wrap gap-2">
-                  {user.sportsInterests.map((sport) => (
-                    <Badge key={sport} variant="secondary" className="capitalize">
-                      {sport}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {user?.searchRadius && (
-              <div>
-                <h4 className="font-medium text-gray-900 mb-1">Search Radius</h4>
-                <p className="text-gray-600">{user.searchRadius} miles</p>
-              </div>
-            )}
-            
-            {user?.genderIdentity && (
-              <div>
-                <h4 className="font-medium text-gray-900 mb-1">Gender Identity</h4>
-                <p className="text-gray-600 capitalize">{user.genderIdentity.replace('-', ' ')}</p>
-              </div>
-            )}
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-sm">Create an event</span>
+              <Badge variant="secondary">+15 points</Badge>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-sm">Join an event</span>
+              <Badge variant="secondary">+5 points</Badge>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-sm">Complete identity verification</span>
+              <Badge variant="secondary">+50 points</Badge>
+            </div>
           </CardContent>
         </Card>
 
         {/* Account Actions */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Account</CardTitle>
+            <CardTitle>Account</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Button 
               variant="outline" 
               className="w-full justify-start"
-              onClick={() => setLocation("/my-events")}
+              onClick={() => setLocation("/preferences")}
             >
-              <i className="fas fa-calendar mr-3"></i>
-              My Events
+              <Users className="w-4 h-4 mr-2" />
+              Edit Preferences
             </Button>
             
             <Button 
               variant="outline" 
               className="w-full justify-start"
-              onClick={() => setLocation("/preferences")}
+              onClick={() => setLocation("/verify-identity")}
             >
-              <i className="fas fa-cog mr-3"></i>
-              Settings
+              <Shield className="w-4 h-4 mr-2" />
+              Identity Verification
             </Button>
             
-            {!user?.isVerified && (
-              <Button 
-                variant="outline" 
-                className="w-full justify-start border-accent text-accent"
-              >
-                <i className="fas fa-shield-check mr-3"></i>
-                Get Verified
-              </Button>
-            )}
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => setLocation("/terms-of-use")}
+            >
+              <AlertCircle className="w-4 h-4 mr-2" />
+              Terms of Use
+            </Button>
+            
+            <Button 
+              variant="destructive" 
+              className="w-full"
+              onClick={handleLogout}
+            >
+              Sign Out
+            </Button>
           </CardContent>
         </Card>
-
-        {/* Logout */}
-        <Button 
-          onClick={handleLogout}
-          variant="destructive"
-          className="w-full"
-        >
-          <i className="fas fa-sign-out-alt mr-2"></i>
-          Sign Out
-        </Button>
       </div>
 
       <BottomNavigation activePage="profile" />

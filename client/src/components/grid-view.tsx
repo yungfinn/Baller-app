@@ -9,9 +9,11 @@ import type { Event } from "@shared/schema";
 
 interface GridViewProps {
   events: Event[];
+  userRsvps?: any[];
+  currentUserId?: string;
 }
 
-export default function GridView({ events }: GridViewProps) {
+export default function GridView({ events, userRsvps = [], currentUserId }: GridViewProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

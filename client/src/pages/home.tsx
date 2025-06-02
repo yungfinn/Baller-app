@@ -28,6 +28,10 @@ export default function Home() {
     }],
   });
 
+  const { data: userRsvps = [] } = useQuery({
+    queryKey: ["/api/user/rsvps"],
+  });
+
   // Check if user needs to set preferences
   const needsPreferences = user && (!user.sportsInterests || !user.skillLevel);
 
@@ -211,9 +215,17 @@ export default function Home() {
             <p className="text-gray-600">Loading events...</p>
           </div>
         ) : viewMode === "swipe" ? (
-          <SwipeView events={events} />
+          <SwipeView 
+            events={events} 
+            userRsvps={userRsvps}
+            currentUserId={user?.id}
+          />
         ) : (
-          <GridView events={events} />
+          <GridView 
+            events={events}
+            userRsvps={userRsvps}
+            currentUserId={user?.id}
+          />
         )}
       </main>
 
