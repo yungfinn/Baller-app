@@ -169,11 +169,15 @@ export default function MyEvents() {
                                     <div className="space-y-2 text-sm">
                                       <div className="flex items-center space-x-2 text-gray-600">
                                         <Calendar className="w-4 h-4" />
-                                        <span>{format(new Date(event.eventDate), "EEEE, MMMM d, yyyy")}</span>
+                                        <span>
+                                          {event.eventDate ? format(new Date(event.eventDate), "EEEE, MMMM d, yyyy") : "Date TBD"}
+                                        </span>
                                       </div>
                                       <div className="flex items-center space-x-2 text-gray-600">
                                         <Clock className="w-4 h-4" />
-                                        <span>{format(new Date(event.eventDate), "h:mm a")}</span>
+                                        <span>
+                                          {event.eventDate ? format(new Date(event.eventDate), "h:mm a") : "Time TBD"}
+                                        </span>
                                       </div>
                                       <div className="flex items-center space-x-2 text-gray-600">
                                         <MapPin className="w-4 h-4" />
