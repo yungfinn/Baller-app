@@ -37,7 +37,7 @@ export default function CreateEvent() {
       locationName: "",
       latitude: "37.7749", // Default to San Francisco coordinates
       longitude: "-122.4194",
-      eventDate: new Date().toISOString().split('T')[0] as any,
+      eventDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] as any,
       eventTime: "",
       notes: "",
     },
@@ -136,7 +136,11 @@ export default function CreateEvent() {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            console.log("Form onSubmit triggered");
+            form.handleSubmit(onSubmit)(e);
+          }} className="space-y-6">
             {/* Basic Info */}
             <Card>
               <CardHeader className="pb-3">
