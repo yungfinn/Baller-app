@@ -134,6 +134,10 @@ export default function EventChat() {
             
           case 'new-message':
             setMessages(prev => [...prev, data]);
+            // Invalidate cache to ensure fresh data on page reload
+            queryClient.invalidateQueries({ 
+              queryKey: [`/api/events/${eventId}/messages`] 
+            });
             if (data.userId !== user.id) {
               playNotificationSound();
             }
