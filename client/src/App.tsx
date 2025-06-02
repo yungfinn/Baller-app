@@ -12,10 +12,12 @@ import CreateEvent from "@/pages/create-event";
 import MyEvents from "@/pages/my-events";
 import Profile from "@/pages/profile";
 import VerifyIdentity from "@/pages/verify-identity";
+import IdentityVerification from "@/pages/identity-verification";
 import SubmitLocation from "@/pages/submit-location";
 import TermsOfUse from "@/pages/terms-of-use";
 import EventCreated from "@/pages/event-created";
 import EventChat from "@/pages/event-chat";
+import AdminPanel from "@/pages/admin-panel";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -48,9 +50,11 @@ function Router() {
           <Route path="/my-events" component={MyEvents} />
           <Route path="/profile" component={Profile} />
           <Route path="/verify-identity" component={VerifyIdentity} />
+          <Route path="/identity-verification" component={IdentityVerification} />
           <Route path="/submit-location" component={SubmitLocation} />
           <Route path="/event-created" component={EventCreated} />
           <Route path="/event/:id/chat" component={EventChat} />
+          <Route path="/admin-panel" component={AdminPanel} />
         </>
       )}
       <Route component={NotFound} />

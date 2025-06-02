@@ -424,7 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         documentType: "selfie",
         fileName: `selfie_${userId}_${Date.now()}`,
-        filePath: "/uploads/verification/selfie/",
+        fileUrl: `/uploads/verification/selfie/${userId}_${Date.now()}`,
         reviewStatus: "pending",
       });
       
@@ -432,7 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         documentType: "government_id", 
         fileName: `id_${userId}_${Date.now()}`,
-        filePath: "/uploads/verification/id/",
+        fileUrl: `/uploads/verification/id/${userId}_${Date.now()}`,
         reviewStatus: "pending",
       });
       

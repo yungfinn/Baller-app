@@ -10,7 +10,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Location, VerificationDocument } from "@shared/schema";
 
 export default function AdminPanel() {
-  const [selectedTab, setSelectedTab] = useState("locations");
+  const [selectedTab, setSelectedTab] = useState("verification");
 
   // Fetch pending locations
   const { data: locations = [], isLoading: locationsLoading } = useQuery({

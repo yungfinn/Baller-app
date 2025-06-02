@@ -10,6 +10,7 @@ import { Search, Filter, Grid3X3, RotateCcw, MapPin, Calendar, Clock } from "luc
 import SwipeView from "@/components/swipe-view";
 import GridView from "@/components/grid-view";
 import BottomNavigation from "@/components/bottom-navigation";
+import PremiumPathwayPopup from "@/components/premium-pathway-popup";
 import { useLocation } from "wouter";
 
 export default function Home() {
@@ -24,6 +25,21 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
+  const [showPremiumPopup, setShowPremiumPopup] = useState(false);
+
+  // Show premium pathway popup for incomplete users
+  useEffect(() => {
+    if (user && user.userTier !== 'premium' && user.userTier !== 'pro') {
+      const hasCompletedAll = user.hasCompletedVerification && user.hasCreatedEvent && user.hasJoinedEvent;
+      if (!hasCompletedAll) {
+        const hasSeenPopup = localStorage.getItem('premiumPopupSeen');
+        if (!hasSeenPopup) {
+          setShowPremiumPopup(true);
+          localStorage.setItem('premiumPopupSeen', 'true');
+        }
+      }
+    }
+  }, [user]);
 
   // Get user location for nearby events
   useEffect(() => {
@@ -307,6 +323,13 @@ export default function Home() {
 
       {/* Bottom Navigation */}
       <BottomNavigation activePage="discover" />
+      
+      {/* Premium Pathway Popup */}
+      <PremiumPathwayPopup 
+        isOpen={showPremiumPopup}
+        onClose={() => setShowPremiumPopup(false)}
+        user={user || {}}
+      />
     </div>
   );
 }
