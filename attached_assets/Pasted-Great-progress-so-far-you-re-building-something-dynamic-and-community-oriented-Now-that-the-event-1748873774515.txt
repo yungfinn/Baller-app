@@ -1,0 +1,91 @@
+Great progress so far — you're building something dynamic and community-oriented. Now that the event group chat system is functional, we can shift toward the real-time chatbox experience like YouTube Live or Twitch — where messages appear instantly, scroll live, and feel energetic and communal.
+🧠 Objective
+
+Upgrade LabuBot’s Event Chat to a Live Chatbox Flow
+Like: Twitch / YouTube Live / Discord Reactions
+🎯 Feature Goals for Replit
+🧩 1. Real-Time Messaging with WebSockets
+
+    Switch from fetch-based polling to WebSocket communication
+
+    Current Issue: Messages only display after sending/fetching
+
+    Goal: Auto-scroll, instant message display from all users
+
+Instructions to Replit:
+
+Please implement WebSocket-based live messaging for event chats.
+
+✅ Use socket.io or ws to establish real-time communication  
+✅ Broadcast incoming messages to all participants of the event  
+✅ Auto-scroll the chat window on new message  
+✅ Group messages by timestamp (optional: throttle spam)  
+✅ Secure: Only allow access if user is host or RSVP’d attendee  
+
+💬 2. UI/UX Enhancements for a Chatbox Feel
+
+Mockup Goals:
+
+    Fixed-height scrollable container (like YouTube Live)
+
+    Name tags (colored, maybe avatars or initials)
+
+    Auto-scroll on new message
+
+    Message input fixed at the bottom
+
+    Timestamp optional, hover-to-reveal
+
+CSS/Component Suggestions:
+
+<div className="flex flex-col h-full">
+  <div className="flex-1 overflow-y-scroll p-2 bg-gray-50" id="chat-box">
+    {messages.map(msg => (
+      <div className="flex items-start gap-2 mb-2">
+        <div className="rounded-full w-8 h-8 bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
+          {msg.userInitials}
+        </div>
+        <div>
+          <p className="text-sm font-semibold">{msg.username}</p>
+          <p className="text-base">{msg.text}</p>
+        </div>
+      </div>
+    ))}
+  </div>
+  <form onSubmit={handleSendMessage} className="flex p-2 border-t">
+    <input className="flex-1 p-2 border rounded" />
+    <button className="ml-2 px-4 bg-blue-500 text-white rounded">Send</button>
+  </form>
+</div>
+
+🛡 3. Security & Access Control
+
+    Only hosts and RSVP'd attendees should access
+
+    Protect WebSocket channels accordingly
+
+    Add visual message like: "You must RSVP to view chat"
+
+🔥 4. Optional Bonus Features
+
+If time/budget permits:
+
+    ✅ Reactions (🔥, 🐻, 👀) per message
+
+    🎉 Notification sound on new message (optional toggle)
+
+    📈 Message rate counter ("X messages in last 10 min")
+
+    🎨 Emojis (via library like emoji-picker-react)
+
+    🎭 Anonymous mode for "lurkers" who RSVP but don’t chat
+
+🧪 Test Case
+Action	Expected Result
+User sends message	It appears instantly in chat for all
+New user joins	They see recent history & incoming messages
+Message arrives	Chat auto-scrolls down unless user scrolls up
+Non-attendee	Gets “Access denied” overlay
+Message spam	Rate limit: 1 message/sec or delay
+
+Let me know and I can mock up the front-end or generate the socket.io implementation for Replit to begin!

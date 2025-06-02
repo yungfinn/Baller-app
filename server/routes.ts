@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEventSchema, insertUserPreferencesSchema, insertRsvpSchema } from "@shared/schema";
@@ -563,5 +564,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // WebSocket server for real-time chat
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Store active connections by event ID
+  const eventConnections = new Map<number, Set<{ ws: WebSocket; userId: string; user: any }>>();
+  
+  wss.on('connection', (ws: WebSocket, request) => {
+    console.log('WebSocket connection established');
+    
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        if (data.type === 'join-event') {
+          const { eventId, userId } = data;
+          
+          // Validate event access
+          const event = await storage.getEventById(eventId);
+          if (!event) {
+            ws.send(JSON.stringify({ type: 'error', message: 'Event not found' }));
+            return;
+          }
+          
+          const userRsvps = await storage.getRsvpsByUser(userId);
+          const isHost = event.hostId === userId;
+          const hasRsvp = userRsvps.some(rsvp => rsvp.eventId === eventId);
+          
+          if (!isHost && !hasRsvp) {
+            ws.send(JSON.stringify({ type: 'error', message: 'Access denied to event chat' }));
+            return;
+          }
+          
+          // Get user info
+          const user = await storage.getUser(userId);
+          
+          // Add to event connections
+          if (!eventConnections.has(eventId)) {
+            eventConnections.set(eventId, new Set());
+          }
+          eventConnections.get(eventId)!.add({ ws, userId, user });
+          
+          ws.send(JSON.stringify({ type: 'joined', eventId }));
+          
+          // Notify other participants
+          const joinMessage = {
+            type: 'user-joined',
+            user: {
+              id: user?.id,
+              firstName: user?.firstName,
+              lastName: user?.lastName
+            }
+          };
+          
+          eventConnections.get(eventId)!.forEach(({ ws: clientWs }) => {
+            if (clientWs !== ws && clientWs.readyState === WebSocket.OPEN) {
+              clientWs.send(JSON.stringify(joinMessage));
+            }
+          });
+        }
+        
+        if (data.type === 'send-message') {
+          const { eventId, message: messageText } = data;
+          
+          // Find the user's connection
+          const connections = eventConnections.get(eventId);
+          if (!connections) return;
+          
+          const userConnection = Array.from(connections).find(conn => conn.ws === ws);
+          if (!userConnection) return;
+          
+          // Create message object
+          const messageObj = {
+            type: 'new-message',
+            id: Date.now(),
+            eventId,
+            userId: userConnection.userId,
+            message: messageText,
+            createdAt: new Date(),
+            user: {
+              id: userConnection.user?.id,
+              firstName: userConnection.user?.firstName,
+              lastName: userConnection.user?.lastName,
+              profileImageUrl: userConnection.user?.profileImageUrl
+            }
+          };
+          
+          // Broadcast to all participants in the event
+          connections.forEach(({ ws: clientWs }) => {
+            if (clientWs.readyState === WebSocket.OPEN) {
+              clientWs.send(JSON.stringify(messageObj));
+            }
+          });
+        }
+        
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+        ws.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
+      }
+    });
+    
+    ws.on('close', () => {
+      // Remove from all event connections
+      eventConnections.forEach((connections, eventId) => {
+        const toRemove = Array.from(connections).find(conn => conn.ws === ws);
+        if (toRemove) {
+          connections.delete(toRemove);
+          
+          // Notify other participants
+          const leaveMessage = {
+            type: 'user-left',
+            user: {
+              id: toRemove.user?.id,
+              firstName: toRemove.user?.firstName,
+              lastName: toRemove.user?.lastName
+            }
+          };
+          
+          connections.forEach(({ ws: clientWs }) => {
+            if (clientWs.readyState === WebSocket.OPEN) {
+              clientWs.send(JSON.stringify(leaveMessage));
+            }
+          });
+          
+          if (connections.size === 0) {
+            eventConnections.delete(eventId);
+          }
+        }
+      });
+    });
+  });
+
   return httpServer;
 }
