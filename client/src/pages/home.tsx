@@ -59,7 +59,7 @@ export default function Home() {
   });
 
   // Check if user needs to set preferences
-  const needsPreferences = user && (!user.sportsInterests || !user.skillLevel);
+  const needsPreferences = user && (!(user as any)?.sportsInterests || !(user as any)?.skillLevel);
 
   if (needsPreferences) {
     return (
