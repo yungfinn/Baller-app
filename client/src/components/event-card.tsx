@@ -1,5 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import SkillBadge from "./skill-badge";
 import { format } from "date-fns";
 import type { Event } from "@shared/schema";
@@ -10,6 +13,8 @@ interface EventCardProps {
   onSkip?: () => void;
   showActions?: boolean;
   className?: string;
+  isUserJoined?: boolean;
+  currentUserId?: string;
 }
 
 export default function EventCard({ 
@@ -17,8 +22,58 @@ export default function EventCard({
   onJoin, 
   onSkip, 
   showActions = false, 
-  className = "" 
+  className = "",
+  isUserJoined = false,
+  currentUserId
 }: EventCardProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const joinEventMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/events/${event.id}/rsvp`, {
+        status: "going"
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/rsvps"] });
+      toast({
+        title: "Joined Event!",
+        description: "You've successfully joined this event.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Join",
+        description: error.message || "Unable to join event. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const leaveEventMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", `/api/events/${event.id}/rsvp`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/rsvps"] });
+      toast({
+        title: "Left Event",
+        description: "You've left this event.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Leave",
+        description: error.message || "Unable to leave event. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
   const getSportIcon = (sport: string) => {
     const icons: Record<string, string> = {
       basketball: "fas fa-basketball-ball",
@@ -106,6 +161,42 @@ export default function EventCard({
               className="flex-1 bg-primary hover:bg-primary/90 text-white"
             >
               <i className="fas fa-heart mr-2"></i>Join
+            </Button>
+          </div>
+        )}
+
+        {!showActions && currentUserId && currentUserId !== event.hostId && (
+          <div className="mt-4">
+            {isUserJoined ? (
+              <Button 
+                onClick={() => leaveEventMutation.mutate()}
+                disabled={leaveEventMutation.isPending}
+                variant="outline"
+                className="w-full"
+              >
+                {leaveEventMutation.isPending ? "Leaving..." : "Leave Event"}
+              </Button>
+            ) : (
+              <Button 
+                onClick={() => joinEventMutation.mutate()}
+                disabled={joinEventMutation.isPending || (event.currentPlayers || 0) >= event.maxPlayers}
+                className="w-full bg-red-600 hover:bg-red-700 text-white"
+              >
+                {joinEventMutation.isPending ? "Joining..." : 
+                 (event.currentPlayers || 0) >= event.maxPlayers ? "Event Full" : "Join Event"}
+              </Button>
+            )}
+          </div>
+        )}
+
+        {currentUserId === event.hostId && (
+          <div className="mt-4">
+            <Button 
+              variant="outline"
+              className="w-full"
+              disabled
+            >
+              <i className="fas fa-crown mr-2 text-yellow-500"></i>You're hosting this event
             </Button>
           </div>
         )}
