@@ -244,11 +244,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRsvpsByUser(userId: string): Promise<EventRsvp[]> {
-    return await db
-      .select()
+    const rsvps = await db
+      .select({
+        id: eventRsvps.id,
+        eventId: eventRsvps.eventId,
+        userId: eventRsvps.userId,
+        status: eventRsvps.status,
+        joinedAt: eventRsvps.joinedAt,
+        event: {
+          id: events.id,
+          title: events.title,
+          description: events.description,
+          sportType: events.sportType,
+          skillLevel: events.skillLevel,
+          eventDate: events.eventDate,
+          locationName: events.locationName,
+          locationAddress: events.locationAddress,
+          maxPlayers: events.maxPlayers,
+          currentPlayers: events.currentPlayers,
+          hostId: events.hostId,
+        }
+      })
       .from(eventRsvps)
+      .leftJoin(events, eq(eventRsvps.eventId, events.id))
       .where(eq(eventRsvps.userId, userId))
       .orderBy(desc(eventRsvps.joinedAt));
+    
+    return rsvps as any;
   }
 
   async updateRsvp(eventId: number, userId: string, status: string): Promise<EventRsvp> {
@@ -296,13 +318,26 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     
-    // If swiping right (interested), create an RSVP
+    // If swiping right (interested), create an RSVP only if one doesn't exist
     if (direction === 'right') {
-      await this.createRsvp({
-        eventId,
-        userId,
-        status: 'interested',
-      });
+      const existingRsvp = await db
+        .select()
+        .from(eventRsvps)
+        .where(
+          and(
+            eq(eventRsvps.userId, userId),
+            eq(eventRsvps.eventId, eventId)
+          )
+        )
+        .limit(1);
+        
+      if (existingRsvp.length === 0) {
+        await this.createRsvp({
+          eventId,
+          userId,
+          status: 'interested',
+        });
+      }
     }
     
     return swipe;
