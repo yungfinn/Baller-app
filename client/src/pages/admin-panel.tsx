@@ -74,6 +74,8 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/verification-documents"],
     enabled: !!user && !!adminData && !adminLoading && !userLoading,
     retry: 1,
+    staleTime: 0,
+    refetchOnMount: true,
   });
   
   // Debug logging
@@ -83,8 +85,8 @@ export default function AdminPanel() {
     adminLoading,
     userLoading,
     docsLoading,
-    docsError,
-    verificationDataLength: verificationData?.length
+    docsError: docsError?.message,
+    verificationDataLength: Array.isArray(verificationData) ? verificationData.length : 'not array'
   });
 
   // Verification mutation
