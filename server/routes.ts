@@ -470,7 +470,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const isAdmin = async (req: any, res: any, next: any) => {
     try {
       const userId = req.user.claims.sub;
+      console.log('Admin check for user:', userId);
       const isUserAdmin = await storage.isUserAdmin(userId);
+      console.log('Is user admin:', isUserAdmin);
       
       if (!isUserAdmin) {
         return res.status(403).json({ message: "Admin access required" });
@@ -478,6 +480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       next();
     } catch (error) {
+      console.error('Admin middleware error:', error);
       res.status(500).json({ message: "Failed to verify admin status" });
     }
   };
