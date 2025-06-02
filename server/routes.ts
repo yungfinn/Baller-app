@@ -25,6 +25,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin access verification route
+  app.get('/api/auth/admin', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const isUserAdmin = await storage.isUserAdmin(userId);
+      
+      if (!isUserAdmin) {
+        return res.status(403).json({ message: "Admin access denied" });
+      }
+      
+      res.json({ isAdmin: true, email: req.user.claims.email });
+    } catch (error) {
+      console.error("Error verifying admin status:", error);
+      res.status(500).json({ message: "Failed to verify admin status" });
+    }
+  });
+
   // Rep point routes
   app.get('/api/user/rep-points', isAuthenticated, async (req: any, res) => {
     try {

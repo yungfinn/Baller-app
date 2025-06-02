@@ -30,18 +30,40 @@ interface UserVerification {
 }
 
 export default function AdminPanel() {
-  const { user } = useAuth();
+  const { user, isLoading: userLoading } = useAuth();
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("verification");
 
-  // Check if user is admin
-  if (!user || user.email !== 'theyungfinn@gmail.com') {
+  // Verify admin access
+  const { data: adminData, isLoading: adminLoading, error: adminError } = useQuery({
+    queryKey: ["/api/auth/admin"],
+    enabled: !!user,
+    retry: false,
+  });
+
+  // Show loading state
+  if (userLoading || adminLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-gray-300 rounded-lg flex items-center justify-center mx-auto mb-3 animate-pulse">
+            <Shield className="w-4 h-4 text-gray-600" />
+          </div>
+          <p className="text-gray-600">Verifying admin access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is admin (using both frontend and backend verification)
+  if (!user || !adminData || adminError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
           <p className="text-gray-600">You don't have permission to access this admin panel.</p>
+          <p className="text-sm text-gray-500 mt-2">Only theyungfinn@gmail.com can access admin features.</p>
         </div>
       </div>
     );
@@ -219,7 +241,7 @@ export default function AdminPanel() {
             <h1 className="text-xl font-bold text-white">Baller</h1>
           </div>
           <div className="text-sm text-gray-400">
-            {user?.email}
+            Admin: {adminData?.email || 'theyungfinn@gmail.com'}
           </div>
         </div>
       </header>
