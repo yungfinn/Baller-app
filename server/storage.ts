@@ -6,6 +6,7 @@ import {
   verificationDocuments,
   locations,
   repActivities,
+  eventMessages,
   type User,
   type UpsertUser,
   type Event,
@@ -18,6 +19,8 @@ import {
   type VerificationDocument,
   type Location,
   type InsertLocation,
+  type EventMessage,
+  type InsertEventMessage,
   type InsertRepActivity,
   type RepActivity,
 } from "@shared/schema";
@@ -81,6 +84,10 @@ export interface IStorage {
   getUserRepPoints(userId: string): Promise<number>;
   updateUserTier(userId: string, tier: string): Promise<User>;
   checkPremiumAccess(userId: string, feature: string): Promise<boolean>;
+  
+  // Message operations
+  createEventMessage(message: InsertEventMessage): Promise<EventMessage>;
+  getEventMessages(eventId: number): Promise<EventMessage[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -510,6 +517,23 @@ export class DatabaseStorage implements IStorage {
 
     const requiredTiers = premiumFeatures[feature as keyof typeof premiumFeatures];
     return requiredTiers ? requiredTiers.includes(user.userTier || 'free') : false;
+  }
+
+  async createEventMessage(messageData: InsertEventMessage): Promise<EventMessage> {
+    const [message] = await db
+      .insert(eventMessages)
+      .values(messageData)
+      .returning();
+    return message;
+  }
+
+  async getEventMessages(eventId: number): Promise<EventMessage[]> {
+    const messages = await db
+      .select()
+      .from(eventMessages)
+      .where(eq(eventMessages.eventId, eventId))
+      .orderBy(eventMessages.createdAt);
+    return messages;
   }
 
   private calculateUserTier(repPoints: number): string {

@@ -344,7 +344,6 @@ export default function CreateEvent() {
                 type="submit" 
                 className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl disabled:opacity-50"
                 disabled={createEventMutation.isPending}
-                onClick={() => console.log("Submit button clicked")}
               >
                 {createEventMutation.isPending ? (
                   <div className="flex items-center gap-2">
