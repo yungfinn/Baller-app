@@ -4,6 +4,9 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEventSchema, insertUserPreferencesSchema, insertRsvpSchema } from "@shared/schema";
+import { db } from "./db";
+import { users, verificationDocuments, events, eventRsvps, eventMessages, userSwipes } from "@shared/schema";
+import { eq, and, or } from "drizzle-orm";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -447,7 +450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin check middleware
-  const isAdmin: RequestHandler = async (req: any, res, next) => {
+  const isAdmin = async (req: any, res: any, next: any) => {
     try {
       const userId = req.user.claims.sub;
       const isUserAdmin = await storage.isUserAdmin(userId);
@@ -476,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/locations/:id/review", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/locations/:id/review", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const locationId = parseInt(req.params.id);
       const { status, reviewNotes } = req.body;
@@ -496,18 +499,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/verification-documents", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/verification-documents", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      // Get all pending verification documents - we'll need to enhance storage method
-      const documents: any[] = []; // Placeholder for now
-      res.json(documents);
+      // Get all pending verification documents with user info for admin review
+      const documents = await db.select({
+        id: verificationDocuments.id,
+        userId: verificationDocuments.userId,
+        documentType: verificationDocuments.documentType,
+        fileName: verificationDocuments.fileName,
+        fileUrl: verificationDocuments.fileUrl,
+        reviewStatus: verificationDocuments.reviewStatus,
+        uploadedAt: verificationDocuments.uploadedAt,
+        reviewNotes: verificationDocuments.reviewNotes,
+        reviewedBy: verificationDocuments.reviewedBy,
+        userEmail: users.email,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        userProfileImage: users.profileImageUrl
+      })
+      .from(verificationDocuments)
+      .leftJoin(users, eq(verificationDocuments.userId, users.id))
+      .where(eq(verificationDocuments.reviewStatus, 'pending'))
+      .orderBy(verificationDocuments.uploadedAt);
+      
+      // Group documents by user for easier admin review
+      const userVerifications = new Map();
+      documents.forEach(doc => {
+        if (!userVerifications.has(doc.userId)) {
+          userVerifications.set(doc.userId, {
+            userId: doc.userId,
+            userEmail: doc.userEmail,
+            userFirstName: doc.userFirstName,
+            userLastName: doc.userLastName,
+            userProfileImage: doc.userProfileImage,
+            documents: []
+          });
+        }
+        userVerifications.get(doc.userId).documents.push(doc);
+      });
+      
+      res.json(Array.from(userVerifications.values()));
     } catch (error) {
       console.error("Error fetching verification documents:", error);
       res.status(500).json({ message: "Failed to fetch verification documents" });
     }
   });
 
-  app.post("/api/admin/users/:userId/verification", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/verification", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { status, reviewNotes } = req.body;

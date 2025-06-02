@@ -5,55 +5,91 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Clock, User, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MapPin, Clock, User, CheckCircle, XCircle, AlertCircle, Plus, Shield, Calendar } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Location, VerificationDocument } from "@shared/schema";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+
+interface UserVerification {
+  userId: string;
+  userEmail: string;
+  userFirstName: string;
+  userLastName: string;
+  userProfileImage: string;
+  documents: {
+    id: number;
+    documentType: string;
+    fileName: string;
+    fileUrl: string;
+    reviewStatus: string;
+    uploadedAt: string;
+  }[];
+}
 
 export default function AdminPanel() {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("verification");
 
-  // Fetch pending locations
-  const { data: locations = [], isLoading: locationsLoading } = useQuery({
-    queryKey: ["/api/admin/locations", { status: "pending" }],
-  });
+  // Check if user is admin
+  if (!user || user.email !== 'theyungfinn@gmail.com') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
+          <p className="text-gray-600">You don't have permission to access this admin panel.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch verification documents
-  const { data: verificationDocs = [], isLoading: docsLoading } = useQuery({
+  const { data: verificationData = [], isLoading: docsLoading } = useQuery({
     queryKey: ["/api/admin/verification-documents"],
   });
 
-  // Location approval mutation
-  const locationMutation = useMutation({
-    mutationFn: async ({ locationId, status, notes }: { locationId: number; status: string; notes?: string }) => {
-      return apiRequest(`/api/admin/locations/${locationId}/review`, {
-        method: "POST",
-        body: JSON.stringify({ status, reviewNotes: notes }),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/locations"] });
-    },
-  });
-
-  // Verification document approval mutation
+  // Verification mutation
   const verificationMutation = useMutation({
     mutationFn: async ({ userId, status, notes }: { userId: string; status: string; notes?: string }) => {
       return apiRequest(`/api/admin/users/${userId}/verification`, {
         method: "POST",
         body: JSON.stringify({ status, reviewNotes: notes }),
+        headers: { "Content-Type": "application/json" }
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/verification-documents"] });
+      toast({
+        title: "Verification Updated",
+        description: "User verification status has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update verification status.",
+        variant: "destructive",
+      });
     },
   });
 
-  const LocationReviewCard = ({ location }: { location: Location }) => {
+  const UserVerificationCard = ({ verification }: { verification: UserVerification }) => {
     const [reviewNotes, setReviewNotes] = useState("");
+    
+    const selfieDoc = verification.documents.find(d => d.documentType === 'selfie');
+    const idDoc = verification.documents.find(d => d.documentType === 'government_id');
+    
+    const displayName = verification.userFirstName && verification.userLastName 
+      ? `${verification.userFirstName} ${verification.userLastName}`
+      : verification.userEmail?.split('@')[0] || verification.userId;
 
     const handleApprove = () => {
-      locationMutation.mutate({
-        locationId: location.id,
+      verificationMutation.mutate({
+        userId: verification.userId,
         status: "approved",
         notes: reviewNotes,
       });
@@ -61,115 +97,8 @@ export default function AdminPanel() {
     };
 
     const handleReject = () => {
-      locationMutation.mutate({
-        locationId: location.id,
-        status: "rejected", 
-        notes: reviewNotes,
-      });
-      setReviewNotes("");
-    };
-
-    return (
-      <Card className="mb-4">
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold">{location.name}</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">{location.address}</p>
-            </div>
-            <Badge variant="outline" className="ml-2">
-              {location.locationType?.charAt(0).toUpperCase() + location.locationType?.slice(1)}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Location Details */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4 text-gray-400" />
-                <span>{location.city}, {location.state}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Clock className="w-4 h-4 text-gray-400" />
-                <span>{new Date(location.createdAt!).toLocaleDateString()}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <User className="w-4 h-4 text-gray-400" />
-                <span>Submitted by user</span>
-              </div>
-            </div>
-
-            {/* Description */}
-            {location.description && (
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Description:</p>
-                <p className="text-sm text-gray-600">{location.description}</p>
-              </div>
-            )}
-
-            {/* Safety Features */}
-            {location.safetyFeatures && (
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Safety Features:</p>
-                <p className="text-sm text-gray-600">{location.safetyFeatures}</p>
-              </div>
-            )}
-
-            {/* Review Notes */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Review Notes (optional)
-              </label>
-              <Textarea
-                value={reviewNotes}
-                onChange={(e) => setReviewNotes(e.target.value)}
-                placeholder="Add any notes about this location review..."
-                className="h-20"
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex space-x-3">
-              <Button
-                onClick={handleApprove}
-                disabled={locationMutation.isPending}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Approve
-              </Button>
-              <Button
-                onClick={handleReject}
-                disabled={locationMutation.isPending}
-                variant="destructive"
-                className="flex-1"
-              >
-                <XCircle className="w-4 h-4 mr-2" />
-                Reject
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  const VerificationReviewCard = ({ doc }: { doc: VerificationDocument }) => {
-    const [reviewNotes, setReviewNotes] = useState("");
-
-    const handleApprove = () => {
       verificationMutation.mutate({
-        userId: doc.userId,
-        status: "verified",
-        notes: reviewNotes,
-      });
-      setReviewNotes("");
-    };
-
-    const handleReject = () => {
-      verificationMutation.mutate({
-        userId: doc.userId,
+        userId: verification.userId,
         status: "rejected",
         notes: reviewNotes,
       });
@@ -177,77 +106,101 @@ export default function AdminPanel() {
     };
 
     return (
-      <Card className="mb-4">
+      <Card className="bg-gray-800 border-gray-700 text-white">
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold">Identity Verification</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">User ID: {doc.userId}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              {verification.userProfileImage ? (
+                <img 
+                  src={verification.userProfileImage} 
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-gray-300" />
+                </div>
+              )}
+              <div>
+                <CardTitle className="text-white">{displayName}</CardTitle>
+                <p className="text-sm text-gray-400">{verification.userEmail}</p>
+              </div>
             </div>
-            <Badge variant="outline" className="ml-2">
-              {doc.documentType?.toUpperCase()}
+            <Badge variant="outline" className="border-red-500 text-red-400">
+              Pending
             </Badge>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Document Details */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center space-x-2">
-                <Clock className="w-4 h-4 text-gray-400" />
-                <span>{new Date(doc.createdAt!).toLocaleDateString()}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-gray-400" />
-                <span className="capitalize">{doc.status}</span>
-              </div>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Username */}
+            <div className="text-center">
+              <Label className="text-gray-300">Username</Label>
+              <p className="text-white font-medium">{displayName}</p>
+            </div>
+            
+            {/* Selfie */}
+            <div className="text-center">
+              <Label className="text-gray-300">Selfie</Label>
+              {selfieDoc ? (
+                <div className="mt-2">
+                  <div className="w-16 h-16 bg-gray-600 rounded-lg mx-auto flex items-center justify-center">
+                    <User className="w-8 h-8 text-gray-300" />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm mt-2">Not uploaded</p>
+              )}
             </div>
 
-            {/* Document Preview */}
-            {doc.fileUrl && (
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Document:</p>
-                <img 
-                  src={doc.fileUrl} 
-                  alt="Verification document" 
-                  className="max-w-full h-40 object-contain border rounded-lg"
-                />
-              </div>
-            )}
-
-            {/* Review Notes */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Review Notes (optional)
-              </label>
-              <Textarea
-                value={reviewNotes}
-                onChange={(e) => setReviewNotes(e.target.value)}
-                placeholder="Add any notes about this verification review..."
-                className="h-20"
-              />
+            {/* ID Document */}
+            <div className="text-center">
+              <Label className="text-gray-300">ID</Label>
+              {idDoc ? (
+                <div className="mt-2">
+                  <div className="w-16 h-16 bg-gray-600 rounded-lg mx-auto flex items-center justify-center">
+                    <Shield className="w-8 h-8 text-gray-300" />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm mt-2">Not uploaded</p>
+              )}
             </div>
+          </div>
 
-            {/* Action Buttons */}
-            <div className="flex space-x-3">
+          {/* Status and Actions */}
+          <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+            <Badge variant="outline" className="border-red-500 text-red-400">
+              Pending
+            </Badge>
+            <div className="flex space-x-2">
               <Button
                 onClick={handleApprove}
                 disabled={verificationMutation.isPending}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                className="bg-green-600 hover:bg-green-700 text-white"
               >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Verify
+                Approve
               </Button>
               <Button
                 onClick={handleReject}
                 disabled={verificationMutation.isPending}
-                variant="destructive"
-                className="flex-1"
+                variant="outline"
+                className="border-gray-600 text-gray-300 hover:bg-gray-700"
               >
-                <XCircle className="w-4 h-4 mr-2" />
                 Reject
               </Button>
             </div>
+          </div>
+
+          {/* Review Notes */}
+          <div>
+            <Label className="text-gray-300">Review Notes (Optional)</Label>
+            <Textarea
+              value={reviewNotes}
+              onChange={(e) => setReviewNotes(e.target.value)}
+              placeholder="Add any notes about this verification..."
+              className="mt-2 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+            />
           </div>
         </CardContent>
       </Card>
@@ -255,96 +208,129 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
-              <i className="fas fa-shield-alt text-white text-sm"></i>
+            <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">🔥</span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
+            <h1 className="text-xl font-bold text-white">Baller</h1>
+          </div>
+          <div className="text-sm text-gray-400">
+            {user?.email}
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="locations">
-              Location Reviews ({locations.length})
-            </TabsTrigger>
-            <TabsTrigger value="verifications">
-              Identity Verifications ({verificationDocs.length})
-            </TabsTrigger>
-          </TabsList>
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className="w-64 bg-gray-900 min-h-screen p-4">
+          <nav className="space-y-2">
+            <button
+              onClick={() => setSelectedTab("events")}
+              className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                selectedTab === "events" 
+                  ? "bg-gray-700 text-white" 
+                  : "text-gray-300 hover:bg-gray-800"
+              }`}
+            >
+              Manage Events
+            </button>
+            <button
+              onClick={() => setSelectedTab("locations")}
+              className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                selectedTab === "locations" 
+                  ? "bg-gray-700 text-white" 
+                  : "text-gray-300 hover:bg-gray-800"
+              }`}
+            >
+              Approve Locations
+            </button>
+            <button
+              onClick={() => setSelectedTab("verification")}
+              className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                selectedTab === "verification" 
+                  ? "bg-red-600 text-white" 
+                  : "text-gray-300 hover:bg-gray-800"
+              }`}
+            >
+              Verify Users
+            </button>
+          </nav>
+        </aside>
 
-          <TabsContent value="locations" className="mt-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Pending Location Reviews</h2>
-                <Badge variant="secondary">{locations.length} pending</Badge>
-              </div>
-
-              {locationsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center mx-auto mb-3 animate-pulse">
-                      <MapPin className="w-4 h-4 text-primary" />
-                    </div>
-                    <p className="text-gray-600">Loading locations...</p>
-                  </div>
-                </div>
-              ) : locations.length === 0 ? (
-                <div className="text-center py-12">
-                  <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No pending reviews</h3>
-                  <p className="text-gray-600">All location submissions have been reviewed.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {locations.map((location: Location) => (
-                    <LocationReviewCard key={location.id} location={location} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="verifications" className="mt-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Pending Identity Verifications</h2>
-                <Badge variant="secondary">{verificationDocs.length} pending</Badge>
+        {/* Main Content */}
+        <main className="flex-1 p-6">
+          {selectedTab === "verification" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Verify Users</h2>
+                <Badge variant="secondary" className="bg-gray-700 text-gray-300">
+                  {verificationData.length} pending
+                </Badge>
               </div>
 
               {docsLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
-                    <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center mx-auto mb-3 animate-pulse">
-                      <AlertCircle className="w-4 h-4 text-primary" />
+                    <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-3 animate-pulse">
+                      <AlertCircle className="w-4 h-4 text-gray-400" />
                     </div>
-                    <p className="text-gray-600">Loading verifications...</p>
+                    <p className="text-gray-400">Loading verifications...</p>
                   </div>
                 </div>
-              ) : verificationDocs.length === 0 ? (
+              ) : verificationData.length === 0 ? (
                 <div className="text-center py-12">
-                  <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No pending verifications</h3>
-                  <p className="text-gray-600">All identity verifications have been reviewed.</p>
+                  <Shield className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-white mb-2">No pending verifications</h3>
+                  <p className="text-gray-400">All identity verifications have been reviewed.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {verificationDocs.map((doc: VerificationDocument) => (
-                    <VerificationReviewCard key={doc.id} doc={doc} />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {verificationData.map((verification: UserVerification) => (
+                    <UserVerificationCard key={verification.userId} verification={verification} />
                   ))}
                 </div>
               )}
             </div>
-          </TabsContent>
-        </Tabs>
-      </main>
+          )}
+
+          {selectedTab === "events" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Manage Events</h2>
+                <Button className="bg-red-600 hover:bg-red-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Event
+                </Button>
+              </div>
+              <div className="text-center py-12">
+                <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-white mb-2">No events created yet</h3>
+                <p className="text-gray-400">Create your first manually curated event for the beta.</p>
+              </div>
+            </div>
+          )}
+
+          {selectedTab === "locations" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Approve Locations</h2>
+                <Badge variant="secondary" className="bg-gray-700 text-gray-300">
+                  0 pending
+                </Badge>
+              </div>
+              <div className="text-center py-12">
+                <MapPin className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-white mb-2">No location requests</h3>
+                <p className="text-gray-400">Users haven't submitted any locations for review yet.</p>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
