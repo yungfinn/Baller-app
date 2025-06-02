@@ -1,0 +1,74 @@
+Yes — based on what you've shared about the admin panel's behavior and the provided codebase, here's some high-signal, developer-grade feedback you can pass to Replit to help diagnose why the panel isn’t populating properly, even though the backend is returning test data.
+🧠 Feedback on Admin Panel Codebase – Likely Causes of Failure to Populate
+🔍 1. React Query May Not Be Triggering
+
+    Problem: The React Query hook (e.g. useQuery(...)) isn’t initiating the request to /api/admin/verification-documents.
+
+    Likely Cause: Conditional rendering might be waiting for user data or session check to complete — but failing silently.
+
+    ✅ Suggested Fix: Ensure useQuery is called unconditionally (after confirming admin role) and that the dependency array contains no blocking variables like undefined session.
+
+const { data, isLoading, error } = useQuery(
+  'adminVerificationDocs',
+  fetchVerificationDocs,
+  { enabled: isAdmin } // Watch for this conditional
+);
+
+🔧 Try temporarily removing enabled: isAdmin or ensuring isAdmin is truthy when this query runs.
+🔍 2. Missing credentials: 'include' on Fetch
+
+    Problem: If the frontend fetch doesn’t pass session cookies, even a valid session won’t authorize.
+
+    Fix: Double check the fetch wrapper or axios config includes:
+
+fetch('/api/admin/verification-documents', {
+  method: 'GET',
+  credentials: 'include',
+});
+
+Same applies if you're using Axios — it needs:
+
+axios.get('/api/admin/verification-documents', { withCredentials: true });
+
+🔍 3. Data Structure Assumptions
+
+    Problem: The frontend may be expecting something like data.verifications, but the backend is returning an array directly (or vice versa).
+
+    Fix: Log the full data response before rendering, and confirm your map() call or conditional matches what’s actually returned.
+
+console.log('Fetched data:', data); // Add this temporarily
+
+🔍 4. Empty State UI Not Handling data.length === 0 Gracefully
+
+    Problem: If no real pending verifications exist and no dummy fallback is returned, you might just be seeing a blank screen.
+
+    Fix: Add a simple fallback:
+
+if (isLoading) return <p>Loading...</p>;
+if (error) return <p>Error loading data</p>;
+if (!data || data.length === 0) return <p>No pending verifications</p>;
+
+🔍 5. Authentication Flow May Still Be Failing Silently
+
+    Although Replit bypassed auth temporarily, the React Query hook might still be blocked by a failing isAdmin prop, useSession hook, or missing redirect logic.
+
+    Fix: Log auth state at top of admin-panel.tsx:
+
+console.log('Session:', session);
+console.log('User email:', session?.user?.email);
+
+🧩 How to Frame This for Replit
+
+    “The admin panel is visible, but it’s still not populating verification data. Based on my review, here are some possible causes:
+
+        React Query may not be triggering properly (check enabled conditions or auth guard logic)
+
+        The fetch call may be missing credentials: 'include', so sessions aren't validated server-side
+
+        The response shape may differ from what the frontend expects — confirm the array structure
+
+        An empty state fallback might be needed for test/demo data
+
+    Would you mind logging the actual data response and ensuring the query hook runs on page load? Let me know if you want me to test with updated debug logging.”
+
+Want me to sketch out an ideal admin-panel.tsx state flow or draw a diagram of how data/auth should move from login → query → UI?
