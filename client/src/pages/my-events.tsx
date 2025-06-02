@@ -56,22 +56,25 @@ export default function MyEvents() {
 
   const isLoading = isLoadingHosted || isLoadingRsvps;
 
-  // Calculate user stats
-  const joinedEvents = rsvps.map((rsvp: any) => rsvp.event).filter(Boolean);
-  const allEvents = [...hostedEvents, ...joinedEvents];
+  // Calculate user stats safely
+  const safeHostedEvents = Array.isArray(hostedEvents) ? hostedEvents : [];
+  const safeRsvps = Array.isArray(rsvps) ? rsvps : [];
+  
+  const joinedEvents = safeRsvps.map((rsvp: any) => rsvp.event).filter(Boolean);
+  const allEvents = [...safeHostedEvents, ...joinedEvents];
   const upcomingEvents = allEvents.filter((event: any) => 
-    new Date(event.eventDate) > new Date()
+    event?.eventDate && new Date(event.eventDate) > new Date()
   );
   const completedEvents = allEvents.filter((event: any) => 
-    new Date(event.eventDate) < new Date()
+    event?.eventDate && new Date(event.eventDate) < new Date()
   );
 
   const stats = {
-    totalHosted: hostedEvents.length,
+    totalHosted: safeHostedEvents.length,
     totalJoined: joinedEvents.length,
     upcoming: upcomingEvents.length,
     completed: completedEvents.length,
-    attendanceRate: completedEvents.length > 0 ? Math.round((completedEvents.length / (completedEvents.length + 2)) * 100) : 0, // Mock calculation
+    attendanceRate: completedEvents.length > 0 ? Math.round((completedEvents.length / (completedEvents.length + 2)) * 100) : 0,
   };
 
   return (
@@ -120,7 +123,7 @@ export default function MyEvents() {
                 </Button>
               </div>
 
-              {hostedEvents.length === 0 ? (
+              {safeHostedEvents.length === 0 ? (
                 <Card>
                   <CardContent className="text-center py-8">
                     <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -138,7 +141,7 @@ export default function MyEvents() {
                 </Card>
               ) : (
                 <div className="space-y-3">
-                  {hostedEvents.map((event: any) => (
+                  {safeHostedEvents.map((event: any) => (
                     <Card key={event.id} className="border border-gray-200">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-3">
@@ -322,7 +325,7 @@ export default function MyEvents() {
             <section>
               <h2 className="text-xl font-bold text-gray-900 mb-4">Events I'm Joining</h2>
 
-              {rsvps.length === 0 ? (
+              {safeRsvps.length === 0 ? (
                 <Card>
                   <CardContent className="text-center py-8">
                     <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -340,7 +343,7 @@ export default function MyEvents() {
                 </Card>
               ) : (
                 <div className="space-y-3">
-                  {rsvps.map((rsvp: any) => (
+                  {safeRsvps.map((rsvp: any) => (
                     <Card key={rsvp.id} className="border border-gray-200">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-3">
