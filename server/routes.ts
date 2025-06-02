@@ -175,6 +175,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/events/:id', isAuthenticated, async (req: any, res) => {
     try {
       const eventId = parseInt(req.params.id);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+      
       const event = await storage.getEventById(eventId);
       
       if (!event) {
@@ -469,6 +474,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating verification status:", error);
       res.status(500).json({ message: "Failed to update verification status" });
+    }
+  });
+
+  // Event Messages/Chat routes
+  app.get('/api/events/:id/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+
+      // For now, return empty array - messages will be implemented with WebSockets
+      res.json([]);
+    } catch (error) {
+      console.error("Error fetching event messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post('/api/events/:id/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      const { message } = req.body;
+      
+      if (isNaN(eventId)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+
+      if (!message || !message.trim()) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+
+      // For now, return a simple response - full implementation with WebSockets coming
+      res.status(201).json({ 
+        id: Date.now(),
+        eventId,
+        userId,
+        message: message.trim(),
+        createdAt: new Date()
+      });
+    } catch (error) {
+      console.error("Error posting message:", error);
+      res.status(500).json({ message: "Failed to post message" });
     }
   });
 

@@ -15,6 +15,7 @@ import VerifyIdentity from "@/pages/verify-identity";
 import SubmitLocation from "@/pages/submit-location";
 import TermsOfUse from "@/pages/terms-of-use";
 import EventCreated from "@/pages/event-created";
+import EventChat from "@/pages/event-chat";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -49,6 +50,7 @@ function Router() {
           <Route path="/verify-identity" component={VerifyIdentity} />
           <Route path="/submit-location" component={SubmitLocation} />
           <Route path="/event-created" component={EventCreated} />
+          <Route path="/event/:id/chat" component={EventChat} />
         </>
       )}
       <Route component={NotFound} />

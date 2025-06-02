@@ -1,93 +1,99 @@
-import { useState, useEffect, useRef } from "react";
-import { useLocation, useRoute } from "wouter";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation, useParams } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Users, Calendar, MapPin, MessageCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { Calendar, MapPin, Users, Clock, Send, ArrowLeft } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import type { EventMessage, InsertEventMessage, Event } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { format, isValid } from "date-fns";
 
 export default function EventChat() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const [match, params] = useRoute("/event/:eventId/chat");
-  const [newMessage, setNewMessage] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const params = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [newMessage, setNewMessage] = useState("");
 
-  const eventId = params?.eventId ? parseInt(params.eventId) : null;
+  const eventId = params.id;
 
-  // Fetch event details
-  const { data: event } = useQuery({
+  const { data: event, isLoading: isLoadingEvent } = useQuery({
     queryKey: ["/api/events", eventId],
     enabled: !!eventId,
   });
 
-  // Fetch event messages
-  const { data: messages = [], isLoading } = useQuery({
+  const { data: messages = [], isLoading: isLoadingMessages } = useQuery({
     queryKey: ["/api/events", eventId, "messages"],
     enabled: !!eventId,
-    refetchInterval: 3000, // Poll for new messages every 3 seconds
   });
 
-  // Fetch event participants
-  const { data: participants = [] } = useQuery({
-    queryKey: ["/api/events", eventId, "participants"],
-    enabled: !!eventId,
-  });
-
-  // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: InsertEventMessage) => {
-      return apiRequest(`/api/events/${eventId}/messages`, {
+    mutationFn: async (message: string) => {
+      return await apiRequest(`/api/events/${eventId}/messages`, {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify({ message }),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/events", eventId, "messages"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/events", eventId, "messages"],
+      });
       setNewMessage("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
   const handleSendMessage = () => {
-    if (!newMessage.trim() || !user?.id || !eventId) return;
-
-    sendMessageMutation.mutate({
-      eventId,
-      userId: user.id,
-      message: newMessage.trim(),
-      messageType: "text",
-    });
+    if (!newMessage.trim()) return;
+    sendMessageMutation.mutate(newMessage);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
+  const formatEventDate = (dateString: string | null) => {
+    if (!dateString) return "Date TBD";
+    const date = new Date(dateString);
+    return isValid(date) ? format(date, "EEEE, MMMM d, yyyy") : "Date TBD";
   };
 
-  if (!match || !eventId) {
+  const formatEventTime = (dateString: string | null) => {
+    if (!dateString) return "Time TBD";
+    const date = new Date(dateString);
+    return isValid(date) ? format(date, "h:mm a") : "Time TBD";
+  };
+
+  if (isLoadingEvent) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Event not found</h2>
-          <Button onClick={() => setLocation("/")} variant="outline">
-            Back to Home
+          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Calendar className="w-6 h-6 text-gray-400" />
+          </div>
+          <p className="text-gray-600">Loading event...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Event not found</h2>
+          <p className="text-gray-600 mb-4">This event may have been removed or doesn't exist.</p>
+          <Button onClick={() => setLocation("/my-events")}>
+            Go back to My Events
           </Button>
         </div>
       </div>
@@ -95,144 +101,121 @@ export default function EventChat() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-100 flex-shrink-0">
+      <header className="bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-md mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <button onClick={() => setLocation("/my-events")} className="text-gray-600">
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <div className="flex-1">
-                <h1 className="text-lg font-bold text-gray-900 truncate">
-                  {event?.title || "Event Chat"}
-                </h1>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <Users className="w-3 h-3" />
-                  <span>{participants.length} participants</span>
-                </div>
-              </div>
+          <div className="flex items-center space-x-3">
+            <button onClick={() => setLocation("/my-events")} className="text-gray-600">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-lg font-bold text-gray-900">{event.title || "Event Chat"}</h1>
+              <p className="text-sm text-gray-600">{event.sportType} Event</p>
             </div>
-            <Badge variant="outline" className="text-accent border-accent">
-              Live Chat
-            </Badge>
           </div>
         </div>
       </header>
 
-      {/* Event Info Card */}
-      {event && (
-        <div className="max-w-md mx-auto px-4 py-3 flex-shrink-0">
-          <Card>
-            <CardContent className="p-4">
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <Calendar className="w-4 h-4" />
-                  <span>{format(new Date(event.eventDate), "MMM d, yyyy")}</span>
-                  <span>•</span>
-                  <span>{event.eventTime}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <MapPin className="w-4 h-4" />
-                  <span className="truncate">{event.locationName}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <Users className="w-4 h-4" />
-                  <span>{participants.length} / {event.maxPlayers} players</span>
-                </div>
+      <div className="max-w-md mx-auto p-4 space-y-4">
+        {/* Event Info Card */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Calendar className="w-4 h-4" />
+                <span>{formatEventDate(event.eventDate)}</span>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Messages Area */}
-      <div className="flex-1 max-w-md mx-auto w-full px-4 flex flex-col">
-        <ScrollArea className="flex-1 py-4">
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="text-gray-600">Loading messages...</div>
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Clock className="w-4 h-4" />
+                <span>{formatEventTime(event.eventDate)}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600">
+                <MapPin className="w-4 h-4" />
+                <span>{event.locationName || "Location TBD"}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Users className="w-4 h-4" />
+                <span>{event.currentPlayers || 0}/{event.maxPlayers || 0} players</span>
+              </div>
             </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-              <h3 className="font-medium text-gray-900 mb-1">Start the conversation!</h3>
-              <p className="text-sm text-gray-600">Be the first to send a message to the group.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {messages.map((message: any) => {
-                const isOwnMessage = message.userId === user?.id;
-                const isSystemMessage = message.messageType === "system";
-                
-                if (isSystemMessage) {
-                  return (
-                    <div key={message.id} className="text-center">
-                      <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                        {message.message}
-                      </span>
-                    </div>
-                  );
-                }
+          </CardContent>
+        </Card>
 
-                return (
-                  <div key={message.id} className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
-                    <div className={`flex space-x-2 max-w-[80%] ${isOwnMessage ? "flex-row-reverse space-x-reverse" : ""}`}>
-                      <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarImage src={message.user?.profileImageUrl} />
-                        <AvatarFallback className="text-xs">
-                          {message.user?.firstName?.[0]}{message.user?.lastName?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"}`}>
-                        <div className={`rounded-2xl px-3 py-2 ${
-                          isOwnMessage 
-                            ? "bg-primary text-primary-foreground" 
-                            : "bg-white border border-gray-200"
-                        }`}>
-                          <p className="text-sm">{message.message}</p>
-                        </div>
-                        <div className="flex items-center space-x-1 mt-1">
-                          {!isOwnMessage && (
-                            <span className="text-xs text-gray-500">
-                              {message.user?.firstName}
-                            </span>
-                          )}
-                          <span className="text-xs text-gray-400">
-                            {format(new Date(message.createdAt), "h:mm a")}
-                          </span>
-                        </div>
-                      </div>
+        {/* Chat Messages */}
+        <Card className="flex-1">
+          <CardHeader>
+            <CardTitle className="text-lg">Event Chat</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isLoadingMessages ? (
+              <div className="text-center py-4">
+                <p className="text-gray-600">Loading messages...</p>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Send className="w-6 h-6 text-gray-400" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2">No messages yet</h3>
+                <p className="text-gray-600 text-sm">Be the first to start the conversation!</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {messages.map((message: any) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${
+                      message.userId === user?.id ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`max-w-xs px-3 py-2 rounded-lg ${
+                        message.userId === user?.id
+                          ? "bg-primary text-white"
+                          : "bg-gray-200 text-gray-900"
+                      }`}
+                    >
+                      <p className="text-sm">{message.message}</p>
+                      <p className="text-xs opacity-70 mt-1">
+                        {message.createdAt ? format(new Date(message.createdAt), "h:mm a") : ""}
+                      </p>
                     </div>
                   </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
-        </ScrollArea>
+                ))}
+              </div>
+            )}
 
-        {/* Message Input */}
-        <div className="py-4 border-t border-gray-200 bg-white">
-          <div className="flex items-center space-x-2">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type a message..."
-              className="flex-1"
-              disabled={sendMessageMutation.isPending}
-            />
-            <Button
-              onClick={handleSendMessage}
-              size="sm"
-              disabled={!newMessage.trim() || sendMessageMutation.isPending}
-              className="px-3"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
+            {/* Message Input */}
+            <div className="flex space-x-2 pt-4 border-t">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                onKeyPress={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                className="flex-1"
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                size="sm"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notice */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-sm text-blue-800">
+            💬 Real-time messaging will be available in the next update. For now, refresh to see new messages.
+          </p>
         </div>
       </div>
     </div>
