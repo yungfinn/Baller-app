@@ -142,8 +142,87 @@ export default function MyEvents() {
                     <Card key={event.id} className="border border-gray-200">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{event.title}</h3>
+                          <div className="flex-1">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <button className="text-left hover:text-blue-600 transition-colors">
+                                  <h3 className="font-semibold text-gray-900 hover:text-blue-600">{event.title}</h3>
+                                </button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle className="text-center">{event.title}</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  {/* Event Details Card */}
+                                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border">
+                                    <div className="flex items-center justify-between mb-3">
+                                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                                        {event.sportType}
+                                      </Badge>
+                                      <SkillBadge level={event.skillLevel} />
+                                    </div>
+                                    
+                                    <div className="space-y-2 text-sm">
+                                      <div className="flex items-center space-x-2 text-gray-600">
+                                        <Calendar className="w-4 h-4" />
+                                        <span>{format(new Date(event.eventDate), "EEEE, MMMM d, yyyy")}</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2 text-gray-600">
+                                        <Clock className="w-4 h-4" />
+                                        <span>{format(new Date(event.eventDate), "h:mm a")}</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2 text-gray-600">
+                                        <MapPin className="w-4 h-4" />
+                                        <span>{event.locationName}</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2 text-gray-600">
+                                        <Users className="w-4 h-4" />
+                                        <span>{event.currentPlayers || 0}/{event.maxPlayers} players</span>
+                                      </div>
+                                    </div>
+                                    
+                                    {event.description && (
+                                      <div className="mt-3 pt-3 border-t border-gray-200">
+                                        <p className="text-sm text-gray-700">{event.description}</p>
+                                      </div>
+                                    )}
+                                    
+                                    <div className="mt-4 flex space-x-2">
+                                      <Button 
+                                        size="sm" 
+                                        className="flex-1"
+                                        onClick={() => setLocation(`/event/${event.id}/chat`)}
+                                      >
+                                        <MessageCircle className="w-3 h-3 mr-2" />
+                                        Event Chat
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="flex-1"
+                                        onClick={() => {
+                                          navigator.share?.({
+                                            title: event.title,
+                                            text: `Join me for ${event.sportType} on ${format(new Date(event.eventDate), "MMM d")}`,
+                                            url: window.location.origin + `/event/${event.id}`
+                                          }).catch(() => {
+                                            navigator.clipboard.writeText(window.location.origin + `/event/${event.id}`);
+                                            toast({
+                                              title: "Link Copied",
+                                              description: "Event link copied to clipboard"
+                                            });
+                                          });
+                                        }}
+                                      >
+                                        <Send className="w-3 h-3 mr-2" />
+                                        Share
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                             <p className="text-sm text-gray-600">{event.locationName}</p>
                           </div>
                           <SkillBadge level={event.skillLevel} />
@@ -163,14 +242,74 @@ export default function MyEvents() {
                         </div>
 
                         <div className="flex space-x-2">
-                          <Button size="sm" variant="outline" className="flex-1">
-                            <i className="fas fa-edit mr-2"></i>
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="outline" className="flex-1">
-                            <i className="fas fa-users mr-2"></i>
-                            View RSVPs
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline" className="flex-1">
+                                <Edit3 className="w-3 h-3 mr-2" />
+                                Edit
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Edit Event</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <p className="text-sm text-gray-600">
+                                  Editing functionality will be available in the next update. 
+                                  For now, you can cancel events if needed.
+                                </p>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" className="w-full">
+                                      <X className="w-4 h-4 mr-2" />
+                                      Cancel Event
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Cancel Event</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to cancel "{event.title}"? This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Keep Event</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                        onClick={() => cancelEventMutation.mutate(event.id)}
+                                        className="bg-red-600 hover:bg-red-700"
+                                      >
+                                        Cancel Event
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline" className="flex-1">
+                                <Users className="w-3 h-3 mr-2" />
+                                View RSVPs
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>{event.title} - Attendees</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="text-center">
+                                  <div className="text-2xl font-bold text-blue-600">{event.currentPlayers || 0}</div>
+                                  <div className="text-sm text-gray-600">out of {event.maxPlayers} players</div>
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  RSVP management features are coming soon. Players will be able to join your event 
+                                  through the main discovery feed.
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       </CardContent>
                     </Card>
