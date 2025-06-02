@@ -70,9 +70,21 @@ export default function AdminPanel() {
   }
 
   // Fetch verification documents
-  const { data: verificationData = [], isLoading: docsLoading } = useQuery({
+  const { data: verificationData = [], isLoading: docsLoading, error: docsError } = useQuery({
     queryKey: ["/api/admin/verification-documents"],
-    enabled: !!user && !!adminData,
+    enabled: !!user && !!adminData && !adminLoading && !userLoading,
+    retry: 1,
+  });
+  
+  // Debug logging
+  console.log('Admin panel debug:', {
+    user: !!user,
+    adminData: !!adminData,
+    adminLoading,
+    userLoading,
+    docsLoading,
+    docsError,
+    verificationDataLength: verificationData?.length
   });
 
   // Verification mutation
