@@ -78,11 +78,26 @@ export default function CreateEvent() {
   };
 
   const onSubmit = (data: InsertEvent) => {
+    console.log("=== FORM SUBMISSION START ===");
     console.log("Form submitted with data:", data);
     console.log("Form errors:", form.formState.errors);
+    console.log("Form is valid:", form.formState.isValid);
+    
+    // Check if all required fields are filled
+    if (!data.title || !data.sportType || !data.skillLevel || !data.locationName || !data.eventDate || !data.eventTime) {
+      console.log("Missing required fields");
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Convert date and time to proper timestamp
     const eventDateTime = new Date(`${data.eventDate}T${data.eventTime}`);
+    console.log("Event DateTime:", eventDateTime);
+    
     createEventMutation.mutate({
       ...data,
       eventDate: eventDateTime,
