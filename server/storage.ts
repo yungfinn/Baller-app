@@ -245,32 +245,23 @@ export class DatabaseStorage implements IStorage {
 
   async getRsvpsByUser(userId: string): Promise<EventRsvp[]> {
     const rsvps = await db
-      .select({
-        id: eventRsvps.id,
-        eventId: eventRsvps.eventId,
-        userId: eventRsvps.userId,
-        status: eventRsvps.status,
-        joinedAt: eventRsvps.joinedAt,
-        event: {
-          id: events.id,
-          title: events.title,
-          description: events.description,
-          sportType: events.sportType,
-          skillLevel: events.skillLevel,
-          eventDate: events.eventDate,
-          locationName: events.locationName,
-          locationAddress: events.locationAddress,
-          maxPlayers: events.maxPlayers,
-          currentPlayers: events.currentPlayers,
-          hostId: events.hostId,
-        }
-      })
+      .select()
       .from(eventRsvps)
-      .leftJoin(events, eq(eventRsvps.eventId, events.id))
       .where(eq(eventRsvps.userId, userId))
       .orderBy(desc(eventRsvps.joinedAt));
     
-    return rsvps as any;
+    // Get event details for each RSVP
+    const rsvpsWithEvents = await Promise.all(
+      rsvps.map(async (rsvp) => {
+        const event = await this.getEventById(rsvp.eventId);
+        return {
+          ...rsvp,
+          event
+        };
+      })
+    );
+    
+    return rsvpsWithEvents as any;
   }
 
   async updateRsvp(eventId: number, userId: string, status: string): Promise<EventRsvp> {
