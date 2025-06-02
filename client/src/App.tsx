@@ -14,6 +14,7 @@ import Profile from "@/pages/profile";
 import VerifyIdentity from "@/pages/verify-identity";
 import SubmitLocation from "@/pages/submit-location";
 import TermsOfUse from "@/pages/terms-of-use";
+import EventCreated from "@/pages/event-created";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -47,6 +48,7 @@ function Router() {
           <Route path="/profile" component={Profile} />
           <Route path="/verify-identity" component={VerifyIdentity} />
           <Route path="/submit-location" component={SubmitLocation} />
+          <Route path="/event-created" component={EventCreated} />
         </>
       )}
       <Route component={NotFound} />

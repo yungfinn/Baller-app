@@ -35,6 +35,8 @@ export default function CreateEvent() {
       skillLevel: "",
       maxPlayers: 8,
       locationName: "",
+      latitude: "37.7749", // Default to San Francisco coordinates
+      longitude: "-122.4194",
       eventDate: new Date().toISOString().split('T')[0] as any,
       eventTime: "",
       notes: "",
@@ -52,7 +54,7 @@ export default function CreateEvent() {
         title: "Event Created",
         description: "Your event has been created successfully.",
       });
-      setLocation("/my-events");
+      setLocation("/event-created");
     },
     onError: () => {
       toast({
@@ -305,10 +307,17 @@ export default function CreateEvent() {
             <div className="pb-20">
               <Button 
                 type="submit" 
-                className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl"
+                className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl disabled:opacity-50"
                 disabled={createEventMutation.isPending}
               >
-                {createEventMutation.isPending ? "Creating..." : "Create Event"}
+                {createEventMutation.isPending ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Creating Event...
+                  </div>
+                ) : (
+                  "Create Event"
+                )}
               </Button>
             </div>
           </form>
