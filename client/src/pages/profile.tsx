@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Shield, CheckCircle, Trophy, Star, Users, Calendar, AlertCircle } from "lucide-react";
+import { Shield, CheckCircle, Trophy, Star, Users, Calendar, AlertCircle, Settings } from "lucide-react";
 import BottomNavigation from "@/components/bottom-navigation";
 
 export default function Profile() {
@@ -191,6 +191,18 @@ export default function Profile() {
               <Shield className="w-4 h-4 mr-2" />
               Identity Verification
             </Button>
+
+            {/* Admin Panel Access - Only for admin users */}
+            {(user as any)?.email === 'theyungfinn@gmail.com' && (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start border-red-200 text-red-600 hover:bg-red-50"
+                onClick={() => setLocation("/admin-panel")}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Admin Panel
+              </Button>
+            )}
             
             <Button 
               variant="outline" 
