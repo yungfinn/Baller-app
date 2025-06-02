@@ -56,12 +56,23 @@ export default function CreateEvent() {
       });
       setLocation("/event-created");
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create event. Please try again.",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      console.log("Event creation error:", error);
+      
+      // Check if it's a premium access error
+      if (error.message?.includes("Premium access") || error.message?.includes("rep points")) {
+        toast({
+          title: "Premium Feature Required",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Event Creation Failed",
+          description: "Please check your details and try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -349,6 +360,9 @@ export default function CreateEvent() {
                 onClick={async () => {
                   console.log("Direct test started");
                   try {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    
                     const testEvent = {
                       title: "Test Basketball Game",
                       description: "Testing event creation",
@@ -358,7 +372,7 @@ export default function CreateEvent() {
                       locationName: "Local Park",
                       latitude: "37.7749",
                       longitude: "-122.4194",
-                      eventDate: new Date(),
+                      eventDate: tomorrow,
                       eventTime: "18:00",
                       notes: "Test event"
                     };

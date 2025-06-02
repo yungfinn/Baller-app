@@ -162,7 +162,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const hasAccess = await storage.checkPremiumAccess(userId, 'same_day_events');
         if (!hasAccess) {
           return res.status(403).json({ 
-            message: "Same-day event creation requires premium access. Upgrade to unlock this feature!" 
+            message: "Events for today require Premium access. Try scheduling for tomorrow or earn more rep points to upgrade your account.",
+            type: "premium_required",
+            feature: "same_day_events"
           });
         }
       }
