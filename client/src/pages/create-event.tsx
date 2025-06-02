@@ -209,20 +209,25 @@ export default function CreateEvent() {
                 <CardTitle className="text-lg">When & Where</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Location
-                  </label>
-                  <LocationPicker 
-                    onLocationSelect={handleLocationSelect}
-                    selectedLocation={selectedLocation}
-                  />
-                  {selectedLocation && (
-                    <div className="text-sm text-green-600 bg-green-50 p-2 rounded border">
-                      Selected: {selectedLocation.name}
-                    </div>
+                <FormField
+                  control={form.control}
+                  name="locationName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., Golden Gate Park Basketball Court"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Enter the name and location of your event
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
+                />
 
                 <FormField
                   control={form.control}
