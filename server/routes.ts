@@ -521,6 +521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/verification-documents", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
+      console.log('Fetching verification documents for admin...');
       // Get all pending verification documents with user info for admin review
       const documents = await db.select({
         id: verificationDocuments.id,
@@ -541,6 +542,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       .leftJoin(users, eq(verificationDocuments.userId, users.id))
       .where(eq(verificationDocuments.reviewStatus, 'pending'))
       .orderBy(verificationDocuments.uploadedAt);
+      
+      console.log('Found documents:', documents.length);
       
       // Group documents by user for easier admin review
       const userVerifications = new Map();
