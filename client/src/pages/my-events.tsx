@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,15 +7,43 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, MapPin, Users, Clock, Trophy, Star, Activity, MessageCircle, Crown, TrendingUp } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Calendar, MapPin, Users, Clock, Trophy, Star, Activity, MessageCircle, Crown, TrendingUp, Edit3, X, Send } from "lucide-react";
 import BottomNavigation from "@/components/bottom-navigation";
 import SkillBadge from "@/components/skill-badge";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 export default function MyEvents() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Event management mutations
+  const cancelEventMutation = useMutation({
+    mutationFn: async (eventId: number) => {
+      const response = await apiRequest("PUT", `/api/events/${eventId}`, { isCanceled: true });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events/host"] });
+      toast({
+        title: "Event Canceled",
+        description: "Your event has been canceled successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to cancel event. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const { data: hostedEvents = [], isLoading: isLoadingHosted } = useQuery({
     queryKey: ["/api/events/host/" + user?.id],

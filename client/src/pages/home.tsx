@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Filter, Grid3X3, RotateCcw, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, Filter, Grid3X3, RotateCcw, MapPin, Calendar, Clock } from "lucide-react";
 import SwipeView from "@/components/swipe-view";
 import GridView from "@/components/grid-view";
 import BottomNavigation from "@/components/bottom-navigation";
@@ -18,13 +19,38 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sportFilter, setSportFilter] = useState("all");
   const [skillFilter, setSkillFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [showNearbyOnly, setShowNearbyOnly] = useState(false);
+
+  // Get user location for nearby events
+  useEffect(() => {
+    if (showNearbyOnly && !userLocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setShowNearbyOnly(false);
+        }
+      );
+    }
+  }, [showNearbyOnly, userLocation]);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["/api/events", { 
       sport: sportFilter !== "all" ? sportFilter : undefined,
       skill: skillFilter !== "all" ? skillFilter : undefined,
-      search: searchQuery || undefined
+      search: searchQuery || undefined,
+      latitude: showNearbyOnly && userLocation ? userLocation.latitude : undefined,
+      longitude: showNearbyOnly && userLocation ? userLocation.longitude : undefined,
+      radius: showNearbyOnly ? 25 : undefined // 25 mile radius
     }],
   });
 
@@ -130,6 +156,47 @@ export default function Home() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-10 rounded-lg border-gray-200 focus:border-primary focus:ring-primary"
             />
+          </div>
+
+          {/* Quick Action Filters */}
+          <div className="flex items-center space-x-2 overflow-x-auto pb-2 mb-3">
+            {/* Nearby Events Toggle */}
+            <button
+              onClick={() => setShowNearbyOnly(!showNearbyOnly)}
+              className={`flex-shrink-0 flex items-center space-x-1 px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                showNearbyOnly
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <MapPin className="w-3 h-3" />
+              <span>Nearby</span>
+            </button>
+
+            {/* Date Filters */}
+            <button
+              onClick={() => setDateFilter(dateFilter === "today" ? "all" : "today")}
+              className={`flex-shrink-0 flex items-center space-x-1 px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                dateFilter === "today"
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <Clock className="w-3 h-3" />
+              <span>Today</span>
+            </button>
+
+            <button
+              onClick={() => setDateFilter(dateFilter === "weekend" ? "all" : "weekend")}
+              className={`flex-shrink-0 flex items-center space-x-1 px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                dateFilter === "weekend"
+                  ? "bg-purple-500 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <Calendar className="w-3 h-3" />
+              <span>Weekend</span>
+            </button>
           </div>
 
           {/* Quick Sport Filters */}

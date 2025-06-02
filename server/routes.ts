@@ -153,12 +153,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/events', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { sport, skill, view } = req.query;
+      const { sport, skill, view, latitude, longitude, radius } = req.query;
       
       const filters = {
         sportType: sport || undefined,
         skillLevel: skill || undefined,
         excludeSwipedByUser: view === 'swipe' ? userId : undefined,
+        latitude: latitude ? parseFloat(latitude) : undefined,
+        longitude: longitude ? parseFloat(longitude) : undefined,
+        radius: radius ? parseFloat(radius) : undefined,
       };
       
       const events = await storage.getEvents(filters);
