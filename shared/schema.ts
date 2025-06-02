@@ -50,6 +50,11 @@ export const users = pgTable("users", {
   repPoints: integer("rep_points").default(0),
   userTier: varchar("user_tier").default("free"), // free, premium, pro
   
+  // Premium pathway tracking for beta launch
+  hasCompletedVerification: boolean("has_completed_verification").default(false),
+  hasCreatedEvent: boolean("has_created_event").default(false),
+  hasJoinedEvent: boolean("has_joined_event").default(false),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

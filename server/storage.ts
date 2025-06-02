@@ -360,13 +360,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateVerificationStatus(userId: string, status: string, reviewNotes?: string, reviewedBy?: string): Promise<User> {
+    const updateData: any = {
+      verificationStatus: status,
+      isVerified: status === "verified",
+      updatedAt: new Date(),
+    };
+    
+    // Update premium pathway tracking when verification is approved
+    if (status === "verified") {
+      updateData.hasCompletedVerification = true;
+      
+      // Award rep points for verification
+      await this.addRepPoints(userId, 'verification_completed', 50, undefined, 'Identity verification approved');
+    }
+
     const [user] = await db
       .update(users)
-      .set({
-        verificationStatus: status,
-        isVerified: status === "verified",
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(users.id, userId))
       .returning();
 
@@ -381,6 +391,11 @@ export class DatabaseStorage implements IStorage {
           verifiedAt: status === "verified" ? new Date() : null,
         })
         .where(eq(verificationDocuments.userId, userId));
+    }
+    
+    // Check if user qualifies for premium upgrade
+    if (status === "verified") {
+      await this.checkAndUpgradeToPremium(userId);
     }
 
     return user;
