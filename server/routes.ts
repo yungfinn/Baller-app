@@ -502,8 +502,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied to event chat" });
       }
 
-      // Return empty array for now - will implement database storage
-      res.json([]);
+      // Get messages from database
+      const messages = await storage.getEventMessages(eventId);
+      res.json(messages);
     } catch (error) {
       console.error("Error fetching event messages:", error);
       res.status(500).json({ message: "Failed to fetch messages" });
@@ -635,14 +636,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const userConnection = Array.from(connections).find(conn => conn.ws === ws);
           if (!userConnection) return;
           
-          // Create message object
-          const messageObj = {
-            type: 'new-message',
-            id: Date.now(),
+          // Store message in database
+          const savedMessage = await storage.createEventMessage({
             eventId,
             userId: userConnection.userId,
             message: messageText,
-            createdAt: new Date(),
+          });
+
+          // Create message object with user info
+          const messageObj = {
+            type: 'new-message',
+            ...savedMessage,
             user: {
               id: userConnection.user?.id,
               firstName: userConnection.user?.firstName,

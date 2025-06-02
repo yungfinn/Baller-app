@@ -48,6 +48,11 @@ export default function EventChat() {
     enabled: !!eventId,
   });
 
+  const { data: messageHistory = [] } = useQuery({
+    queryKey: [`/api/events/${eventId}/messages`],
+    enabled: !!eventId,
+  });
+
   // Get user initials for avatar
   const getUserInitials = (firstName?: string, lastName?: string) => {
     const first = firstName?.charAt(0) || '';
