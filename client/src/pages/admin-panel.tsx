@@ -72,6 +72,7 @@ export default function AdminPanel() {
   // Fetch verification documents
   const { data: verificationData = [], isLoading: docsLoading } = useQuery({
     queryKey: ["/api/admin/verification-documents"],
+    enabled: !!user && !!adminData,
   });
 
   // Verification mutation
