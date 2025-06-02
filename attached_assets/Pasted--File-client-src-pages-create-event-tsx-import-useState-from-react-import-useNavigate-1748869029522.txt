@@ -1,0 +1,93 @@
+// 📁 File: client/src/pages/create-event.tsx
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+export default function CreateEvent() {
+  const navigate = useNavigate();
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const response = await fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, date })
+    });
+
+    if (response.ok) {
+      const { eventId } = await response.json();
+      navigate(`/events/${eventId}`); // ✅ Redirect to new event page
+    } else {
+      setError("Failed to create event. Please try again.");
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <input
+        type="text"
+        placeholder="Event Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        required
+      />
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+        required
+      />
+      <button type="submit">Create Event</button>
+      {error && <p className="text-red-500">{error}</p>}
+    </form>
+  );
+}
+
+// 📁 File: server/routes.ts
+app.post("/api/events", async (req, res) => {
+  const { title, date } = req.body;
+  if (!title || !date) {
+    return res.status(400).json({ error: "Missing title or date" });
+  }
+
+  try {
+    const newEvent = await db.insert("events", { title, date });
+    res.status(201).json({ eventId: newEvent.id });
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// 📁 File: server/routes.ts
+app.get("/api/events/:id", async (req, res) => {
+  const event = await db.get("events", req.params.id);
+  if (!event) return res.status(404).json({ error: "Event not found" });
+  res.json(event);
+});
+
+// 📁 File: client/src/pages/event-details.tsx
+import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+
+export default function EventDetails() {
+  const { eventId } = useParams();
+  const [event, setEvent] = useState(null);
+
+  useEffect(() => {
+    fetch(`/api/events/${eventId}`)
+      .then((res) => res.json())
+      .then(setEvent);
+  }, [eventId]);
+
+  if (!event) return <p>Loading...</p>;
+
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-bold">{event.title}</h1>
+      <p>Date: {event.date}</p>
+    </div>
+  );
+}
