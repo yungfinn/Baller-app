@@ -595,6 +595,12 @@ export class DatabaseStorage implements IStorage {
     if (repPoints >= 250) return 'premium';
     return 'free';
   }
+
+  // Admin permission check
+  async isUserAdmin(userId: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    return user?.email === 'theyungfinn@gmail.com';
+  }
 }
 
 export const storage = new DatabaseStorage();

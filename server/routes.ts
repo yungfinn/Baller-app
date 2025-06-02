@@ -446,8 +446,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin check middleware
+  const isAdmin: RequestHandler = async (req: any, res, next) => {
+    try {
+      const userId = req.user.claims.sub;
+      const isUserAdmin = await storage.isUserAdmin(userId);
+      
+      if (!isUserAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      next();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to verify admin status" });
+    }
+  };
+
   // Admin routes
-  app.get("/api/admin/locations", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/locations", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { status } = req.query;
       const locations = await storage.getLocations({ 
