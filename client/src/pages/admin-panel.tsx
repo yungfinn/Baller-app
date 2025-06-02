@@ -77,10 +77,9 @@ export default function AdminPanel() {
   // Verification mutation
   const verificationMutation = useMutation({
     mutationFn: async ({ userId, status, notes }: { userId: string; status: string; notes?: string }) => {
-      return apiRequest(`/api/admin/users/${userId}/verification`, {
-        method: "POST",
-        body: JSON.stringify({ status, reviewNotes: notes }),
-        headers: { "Content-Type": "application/json" }
+      return apiRequest(`/api/admin/users/${userId}/verification`, "POST", {
+        status, 
+        reviewNotes: notes
       });
     },
     onSuccess: () => {

@@ -17,7 +17,8 @@ export default function Profile() {
   });
 
   const { data: hostedEvents = [] } = useQuery({
-    queryKey: ["/api/events/host", user?.id],
+    queryKey: ["/api/events/host", (user as any)?.id],
+    enabled: !!(user as any)?.id,
   });
 
   const { data: userRsvps = [] } = useQuery({
