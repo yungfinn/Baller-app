@@ -636,31 +636,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const userConnection = Array.from(connections).find(conn => conn.ws === ws);
           if (!userConnection) return;
           
-          // Store message in database
-          const savedMessage = await storage.createEventMessage({
-            eventId,
-            userId: userConnection.userId,
-            message: messageText,
-          });
+          try {
+            // Store message in database
+            console.log('Saving message to database:', { eventId, userId: userConnection.userId, message: messageText });
+            const savedMessage = await storage.createEventMessage({
+              eventId,
+              userId: userConnection.userId,
+              message: messageText,
+            });
+            console.log('Message saved successfully:', savedMessage);
 
-          // Create message object with user info
-          const messageObj = {
-            type: 'new-message',
-            ...savedMessage,
-            user: {
-              id: userConnection.user?.id,
-              firstName: userConnection.user?.firstName,
-              lastName: userConnection.user?.lastName,
-              profileImageUrl: userConnection.user?.profileImageUrl
-            }
-          };
-          
-          // Broadcast to all participants in the event
-          connections.forEach(({ ws: clientWs }) => {
-            if (clientWs.readyState === WebSocket.OPEN) {
-              clientWs.send(JSON.stringify(messageObj));
-            }
-          });
+            // Create message object with user info
+            const messageObj = {
+              type: 'new-message',
+              ...savedMessage,
+              user: {
+                id: userConnection.user?.id,
+                firstName: userConnection.user?.firstName,
+                lastName: userConnection.user?.lastName,
+                profileImageUrl: userConnection.user?.profileImageUrl
+              }
+            };
+
+            // Broadcast to all participants in the event
+            connections.forEach(({ ws: clientWs }) => {
+              if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(JSON.stringify(messageObj));
+              }
+            });
+          } catch (error) {
+            console.error('Error saving message to database:', error);
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: 'Failed to save message'
+            }));
+          }
         }
         
       } catch (error) {
