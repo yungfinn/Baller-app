@@ -324,11 +324,12 @@ export default function CreateEvent() {
               </CardContent>
             </Card>
 
-            <div className="pb-20">
+            <div className="pb-20 space-y-3">
               <Button 
                 type="submit" 
                 className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl disabled:opacity-50"
                 disabled={createEventMutation.isPending}
+                onClick={() => console.log("Submit button clicked")}
               >
                 {createEventMutation.isPending ? (
                   <div className="flex items-center gap-2">
@@ -338,6 +339,51 @@ export default function CreateEvent() {
                 ) : (
                   "Create Event"
                 )}
+              </Button>
+              
+              {/* Direct test button */}
+              <Button 
+                type="button"
+                variant="outline"
+                className="w-full h-12"
+                onClick={async () => {
+                  console.log("Direct test started");
+                  try {
+                    const testEvent = {
+                      title: "Test Basketball Game",
+                      description: "Testing event creation",
+                      sportType: "basketball",
+                      skillLevel: "intermediate",
+                      maxPlayers: 8,
+                      locationName: "Local Park",
+                      latitude: "37.7749",
+                      longitude: "-122.4194",
+                      eventDate: new Date(),
+                      eventTime: "18:00",
+                      notes: "Test event"
+                    };
+                    
+                    const response = await apiRequest("POST", "/api/events", testEvent);
+                    console.log("API Response:", response);
+                    
+                    if (response.ok) {
+                      toast({
+                        title: "Success!",
+                        description: "Test event created successfully",
+                      });
+                      setLocation("/event-created");
+                    }
+                  } catch (error) {
+                    console.error("Test failed:", error);
+                    toast({
+                      title: "Test Failed",
+                      description: String(error),
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                Test Direct API Call
               </Button>
             </div>
           </form>
