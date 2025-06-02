@@ -19,7 +19,7 @@ export default function MyEvents() {
   const queryClient = useQueryClient();
 
   const { data: hostedEvents = [], isLoading: isLoadingHosted } = useQuery({
-    queryKey: ["/api/events/host", user?.id],
+    queryKey: [`/api/events/host/${user?.id}`],
     enabled: !!user?.id,
   });
 

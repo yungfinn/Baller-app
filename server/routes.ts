@@ -486,7 +486,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid event ID" });
       }
 
-      // For now, return empty array - messages will be implemented with WebSockets
+      // Check if event exists and user has access (is host or has RSVP)
+      const event = await storage.getEventById(eventId);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      const userId = req.user.claims.sub;
+      const userRsvps = await storage.getRsvpsByUser(userId);
+      const isHost = event.hostId === userId;
+      const hasRsvp = userRsvps.some(rsvp => rsvp.eventId === eventId);
+
+      if (!isHost && !hasRsvp) {
+        return res.status(403).json({ message: "Access denied to event chat" });
+      }
+
+      // Return empty array for now - will implement database storage
       res.json([]);
     } catch (error) {
       console.error("Error fetching event messages:", error);
@@ -508,14 +523,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Message content is required" });
       }
 
-      // For now, return a simple response - full implementation with WebSockets coming
-      res.status(201).json({ 
+      // Check if event exists and user has access
+      const event = await storage.getEventById(eventId);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      const userRsvps = await storage.getRsvpsByUser(userId);
+      const isHost = event.hostId === userId;
+      const hasRsvp = userRsvps.some(rsvp => rsvp.eventId === eventId);
+
+      if (!isHost && !hasRsvp) {
+        return res.status(403).json({ message: "Access denied to event chat" });
+      }
+
+      // Get user info for the message
+      const user = await storage.getUser(userId);
+      
+      // Return message with user info
+      const messageResponse = {
         id: Date.now(),
         eventId,
         userId,
         message: message.trim(),
-        createdAt: new Date()
-      });
+        createdAt: new Date(),
+        user: {
+          id: user?.id,
+          firstName: user?.firstName,
+          lastName: user?.lastName,
+          profileImageUrl: user?.profileImageUrl
+        }
+      };
+
+      res.status(201).json(messageResponse);
     } catch (error) {
       console.error("Error posting message:", error);
       res.status(500).json({ message: "Failed to post message" });

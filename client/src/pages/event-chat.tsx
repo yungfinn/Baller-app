@@ -33,13 +33,7 @@ export default function EventChat() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
-      return await apiRequest(`/api/events/${eventId}/messages`, {
-        method: "POST",
-        body: JSON.stringify({ message }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      return await apiRequest(`/api/events/${eventId}/messages`, "POST", { message });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -145,7 +139,8 @@ export default function EventChat() {
         {/* Chat Messages */}
         <Card className="flex-1">
           <CardHeader>
-            <CardTitle className="text-lg">Event Chat</CardTitle>
+            <CardTitle className="text-lg">Group Chat</CardTitle>
+            <p className="text-sm text-gray-600">Chat with all event participants</p>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoadingMessages ? (
@@ -176,6 +171,11 @@ export default function EventChat() {
                           : "bg-gray-200 text-gray-900"
                       }`}
                     >
+                      {message.userId !== user?.id && (
+                        <p className="text-xs font-semibold mb-1 opacity-70">
+                          {message.user?.firstName || "Unknown User"}
+                        </p>
+                      )}
                       <p className="text-sm">{message.message}</p>
                       <p className="text-xs opacity-70 mt-1">
                         {message.createdAt ? format(new Date(message.createdAt), "h:mm a") : ""}
