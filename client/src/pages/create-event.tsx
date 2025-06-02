@@ -35,7 +35,7 @@ export default function CreateEvent() {
       skillLevel: "",
       maxPlayers: 8,
       locationName: "",
-      eventDate: new Date(),
+      eventDate: new Date().toISOString().split('T')[0] as any,
       eventTime: "",
       notes: "",
     },
@@ -76,8 +76,11 @@ export default function CreateEvent() {
   };
 
   const onSubmit = (data: InsertEvent) => {
-    // Convert date and time to proper format  
-    const eventDateTime = `${data.eventDate}T${data.eventTime}`;
+    console.log("Form submitted with data:", data);
+    console.log("Form errors:", form.formState.errors);
+    
+    // Convert date and time to proper timestamp
+    const eventDateTime = new Date(`${data.eventDate}T${data.eventTime}`);
     createEventMutation.mutate({
       ...data,
       eventDate: eventDateTime,
@@ -226,7 +229,11 @@ export default function CreateEvent() {
                     <FormItem>
                       <FormLabel>Date</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input 
+                          type="date" 
+                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                          onChange={(e) => field.onChange(e.target.value)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -265,7 +272,8 @@ export default function CreateEvent() {
                         <Textarea 
                           placeholder="Tell people about your event..."
                           rows={3}
-                          {...field} 
+                          value={field.value || ""}
+                          onChange={field.onChange}
                         />
                       </FormControl>
                       <FormMessage />
@@ -283,7 +291,8 @@ export default function CreateEvent() {
                         <Textarea 
                           placeholder="e.g., Bring water, parking available..."
                           rows={2}
-                          {...field} 
+                          value={field.value || ""}
+                          onChange={field.onChange}
                         />
                       </FormControl>
                       <FormMessage />
