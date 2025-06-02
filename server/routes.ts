@@ -55,6 +55,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User stats route for rep dashboard
+  app.get('/api/user/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const repPoints = await storage.getUserRepPoints(userId);
+      res.json({ repPoints });
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ message: "Failed to fetch user stats" });
+    }
+  });
+
+  // User hosted events route
+  app.get('/api/events/host/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const events = await storage.getEventsByHost(userId);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching hosted events:", error);
+      res.status(500).json({ message: "Failed to fetch hosted events" });
+    }
+  });
+
+  // User RSVP route
+  app.get('/api/user/rsvps', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const rsvps = await storage.getRsvpsByUser(userId);
+      res.json(rsvps);
+    } catch (error) {
+      console.error("Error fetching user RSVPs:", error);
+      res.status(500).json({ message: "Failed to fetch user RSVPs" });
+    }
+  });
+
   // User preferences routes
   app.put('/api/user/preferences', isAuthenticated, async (req: any, res) => {
     try {
