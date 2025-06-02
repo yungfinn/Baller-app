@@ -293,13 +293,15 @@ export default function CreateEvent() {
               </CardContent>
             </Card>
 
-            <Button 
-              type="submit" 
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl"
-              disabled={createEventMutation.isPending}
-            >
-              {createEventMutation.isPending ? "Creating..." : "Create Event"}
-            </Button>
+            <div className="pb-20">
+              <Button 
+                type="submit" 
+                className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl"
+                disabled={createEventMutation.isPending}
+              >
+                {createEventMutation.isPending ? "Creating..." : "Create Event"}
+              </Button>
+            </div>
           </form>
         </Form>
       </div>
