@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useRoute } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Users, Calendar, MapPin } from "lucide-react";
+import { ArrowLeft, Send, Users, Calendar, MapPin, MessageCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import type { EventMessage, InsertEventMessage, Event } from "@shared/schema";
 
 export default function EventChat() {
@@ -19,6 +20,8 @@ export default function EventChat() {
   const [match, params] = useRoute("/event/:eventId/chat");
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const eventId = params?.eventId ? parseInt(params.eventId) : null;
 
