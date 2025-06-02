@@ -94,6 +94,14 @@ export default function EventChat() {
     }
   };
 
+  // Load message history when component mounts or messageHistory changes
+  useEffect(() => {
+    if (messageHistory && messageHistory.length > 0) {
+      setMessages(messageHistory);
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [messageHistory]);
+
   // WebSocket connection
   useEffect(() => {
     if (!eventId || !user?.id) return;

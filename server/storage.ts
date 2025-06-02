@@ -529,11 +529,24 @@ export class DatabaseStorage implements IStorage {
 
   async getEventMessages(eventId: number): Promise<EventMessage[]> {
     const messages = await db
-      .select()
+      .select({
+        id: eventMessages.id,
+        eventId: eventMessages.eventId,
+        userId: eventMessages.userId,
+        message: eventMessages.message,
+        createdAt: eventMessages.createdAt,
+        user: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
       .from(eventMessages)
+      .leftJoin(users, eq(eventMessages.userId, users.id))
       .where(eq(eventMessages.eventId, eventId))
       .orderBy(eventMessages.createdAt);
-    return messages;
+    return messages as any;
   }
 
   private calculateUserTier(repPoints: number): string {
