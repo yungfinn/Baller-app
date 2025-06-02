@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,13 @@ export default function Home() {
   const { data: userRsvps = [] } = useQuery({
     queryKey: ["/api/user/rsvps"],
   });
+
+  // Filter out events user has already RSVP'd to
+  const filteredEvents = useMemo(() => {
+    if (!events || !userRsvps) return [];
+    const rsvpEventIds = new Set((userRsvps as any[]).map((rsvp: any) => rsvp.eventId));
+    return (events as any[]).filter((event: any) => !rsvpEventIds.has(event.id));
+  }, [events, userRsvps]);
 
   // Check if user needs to set preferences
   const needsPreferences = user && (!(user as any)?.sportsInterests || !(user as any)?.skillLevel);
@@ -283,15 +290,15 @@ export default function Home() {
           </div>
         ) : viewMode === "swipe" ? (
           <SwipeView 
-            events={events} 
+            events={filteredEvents} 
             userRsvps={userRsvps}
-            currentUserId={user?.id}
+            currentUserId={(user as any)?.id}
           />
         ) : (
           <GridView 
-            events={events}
+            events={filteredEvents}
             userRsvps={userRsvps}
-            currentUserId={user?.id}
+            currentUserId={(user as any)?.id}
           />
         )}
       </main>
