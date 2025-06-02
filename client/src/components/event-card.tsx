@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import SkillBadge from "./skill-badge";
-import { format } from "date-fns";
+import { format, formatDistanceToNow, isPast, isFuture } from "date-fns";
 import type { Event } from "@shared/schema";
 
 interface EventCardProps {
@@ -98,6 +98,19 @@ export default function EventCard({
     return images[event.sportType] || images.basketball;
   };
 
+  const getEventStatus = () => {
+    const eventDate = new Date(event.eventDate);
+    const now = new Date();
+    
+    if (isPast(eventDate)) {
+      return { status: 'past', text: 'Event Ended', color: 'text-gray-500 bg-gray-100' };
+    } else if (isFuture(eventDate)) {
+      const timeUntil = formatDistanceToNow(eventDate, { addSuffix: true });
+      return { status: 'upcoming', text: `Starts ${timeUntil}`, color: 'text-blue-600 bg-blue-50' };
+    }
+    return { status: 'live', text: 'Live Now', color: 'text-green-600 bg-green-50' };
+  };
+
   return (
     <Card className={`overflow-hidden border border-gray-100 ${className}`}>
       <div className="relative h-48">
@@ -112,6 +125,11 @@ export default function EventCard({
         </div>
         <div className="absolute top-4 right-4 text-white">
           <i className={`${getSportIcon(event.sportType)} text-lg`}></i>
+        </div>
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+          <div className={`px-3 py-1 rounded-full text-xs font-medium ${getEventStatus().color}`}>
+            {getEventStatus().text}
+          </div>
         </div>
         <div className="absolute bottom-4 left-4 text-white">
           <h3 className="text-xl font-bold mb-1">{event.title}</h3>
@@ -168,21 +186,28 @@ export default function EventCard({
         {!showActions && currentUserId && currentUserId !== event.hostId && (
           <div className="mt-4">
             {isUserJoined ? (
-              <Button 
-                onClick={() => leaveEventMutation.mutate()}
-                disabled={leaveEventMutation.isPending}
-                variant="outline"
-                className="w-full"
-              >
-                {leaveEventMutation.isPending ? "Leaving..." : "Leave Event"}
-              </Button>
+              <div className="space-y-2">
+                <div className="flex items-center justify-center py-2 px-4 bg-green-50 border border-green-200 rounded-lg">
+                  <i className="fas fa-check-circle text-green-600 mr-2"></i>
+                  <span className="text-green-700 font-medium">You're In!</span>
+                </div>
+                <Button 
+                  onClick={() => leaveEventMutation.mutate()}
+                  disabled={leaveEventMutation.isPending}
+                  variant="outline"
+                  className="w-full border-red-200 hover:bg-red-50 text-red-600"
+                >
+                  {leaveEventMutation.isPending ? "Leaving..." : "Leave Event"}
+                </Button>
+              </div>
             ) : (
               <Button 
                 onClick={() => joinEventMutation.mutate()}
-                disabled={joinEventMutation.isPending || (event.currentPlayers || 0) >= event.maxPlayers}
-                className="w-full bg-red-600 hover:bg-red-700 text-white"
+                disabled={joinEventMutation.isPending || (event.currentPlayers || 0) >= event.maxPlayers || getEventStatus().status === 'past'}
+                className="w-full bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-400"
               >
                 {joinEventMutation.isPending ? "Joining..." : 
+                 getEventStatus().status === 'past' ? "Event Ended" :
                  (event.currentPlayers || 0) >= event.maxPlayers ? "Event Full" : "Join Event"}
               </Button>
             )}
