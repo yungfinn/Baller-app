@@ -413,6 +413,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Identity verification file upload route
+  app.post("/api/verification/upload", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // For beta launch, we'll store file references without actual file upload
+      // In production, you would integrate with a file storage service
+      const selfieDoc = await storage.uploadVerificationDocument({
+        userId,
+        documentType: "selfie",
+        fileName: `selfie_${userId}_${Date.now()}`,
+        filePath: "/uploads/verification/selfie/",
+        reviewStatus: "pending",
+      });
+      
+      const idDoc = await storage.uploadVerificationDocument({
+        userId,
+        documentType: "government_id", 
+        fileName: `id_${userId}_${Date.now()}`,
+        filePath: "/uploads/verification/id/",
+        reviewStatus: "pending",
+      });
+      
+      // Update user verification status to pending
+      await storage.updateVerificationStatus(userId, "pending");
+      
+      res.status(201).json({ selfie: selfieDoc, governmentId: idDoc });
+    } catch (error) {
+      console.error("Error uploading verification documents:", error);
+      res.status(500).json({ message: "Failed to upload verification documents" });
+    }
+  });
+
   // Admin routes
   app.get("/api/admin/locations", isAuthenticated, async (req: any, res) => {
     try {
