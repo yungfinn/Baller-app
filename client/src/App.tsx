@@ -35,6 +35,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/terms" component={TermsOfUse} />
+      <Route path="/terms-of-use" component={TermsOfUse} />
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
