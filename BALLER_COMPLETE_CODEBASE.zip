@@ -1,0 +1,143 @@
+# BALLER - Complete Codebase Export
+
+## Package.json
+```json
+{
+  "name": "rest-express",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "NODE_ENV=development tsx server/index.ts",
+    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "start": "NODE_ENV=production node dist/index.js",
+    "check": "tsc",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.10.0",
+    "@neondatabase/serverless": "^0.10.4",
+    "@radix-ui/react-*": "latest versions",
+    "@tanstack/react-query": "^5.60.5",
+    "class-variance-authority": "^0.7.1",
+    "drizzle-orm": "^0.39.1",
+    "drizzle-zod": "^0.7.0",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "openid-client": "^6.5.0",
+    "passport": "^0.7.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "5.6.3",
+    "ws": "^8.18.0",
+    "zod": "^3.24.2"
+  }
+}
+```
+
+## Database Schema (shared/schema.ts)
+Complete PostgreSQL schema with Drizzle ORM including:
+- Users table with verification status and premium features
+- Events table with location and timing data
+- Event RSVPs and user swipes for discovery
+- Verification documents for identity checking
+- Locations for venue management
+- Event messages for real-time chat
+- Rep activities for user engagement tracking
+
+## Server Architecture (server/)
+
+### routes.ts - Complete API Routes
+- Authentication with Replit OpenID
+- User management and preferences
+- Event CRUD operations with location filtering
+- Real-time WebSocket chat implementation
+- Admin panel for verification review
+- Rep points and premium access system
+- Location submission and approval workflow
+
+### storage.ts - Database Operations
+Complete implementation of storage interface with methods for:
+- User operations (get, upsert, preferences)
+- Event management (create, update, filter, delete)
+- RSVP system (join, leave, status tracking)
+- Swipe functionality for event discovery
+- Identity verification document handling
+- Location management with admin approval
+- Rep point calculations and tier upgrades
+- Real-time messaging system
+
+### replitAuth.ts - Authentication System
+- OpenID Connect integration with Replit
+- Session management with PostgreSQL storage
+- Token refresh and validation
+- Admin role verification
+
+## Client Application (client/src/)
+
+### Core Components
+- App.tsx: Main routing and authentication flow
+- Bottom navigation for mobile experience
+- Event cards with swipe gestures
+- Location picker with map integration
+- Premium pathway tracking popup
+
+### Pages Implementation
+- Landing page for unauthenticated users
+- Home with event discovery (swipe/grid views)
+- Event creation with location selection
+- User profile with verification status
+- Admin panel for document review
+- Real-time event chat with WebSocket
+- Identity verification workflow
+
+### Key Features
+- Responsive mobile-first design
+- Tinder-style swipe discovery
+- Real-time chat in events
+- Progressive Web App capabilities
+- Admin verification workflow
+- Premium tier progression system
+
+## Authentication Flow
+1. User signs in via Replit OpenID Connect
+2. Session stored in PostgreSQL with automatic refresh
+3. Identity verification required for platform access
+4. Admin manual approval for all verifications
+5. Premium unlocked through pathway completion
+
+## Premium System
+- Rep points earned through platform engagement
+- Three tiers: Free, Premium, Pro
+- Automatic upgrade when users complete:
+  - Identity verification
+  - Create first event
+  - Join first event
+
+## Admin Features
+- Document review interface
+- User verification approval/rejection
+- Event moderation capabilities
+- Location approval workflow
+- User tier management
+
+## Security Implementation
+- Session-based authentication with CSRF protection
+- Admin-only route protection (theyungfinn@gmail.com)
+- Secure file upload handling for verification
+- Input validation with Zod schemas
+- XSS prevention measures
+
+## Real-Time Features
+- WebSocket chat for event participants
+- Live RSVP updates
+- Real-time user activity notifications
+
+## Mobile Optimization
+- Touch-optimized swipe gestures
+- Progressive Web App setup
+- Responsive design for all screen sizes
+- Bottom navigation for mobile UX
+
+This represents a production-ready sports event discovery platform with comprehensive user management, real-time features, and robust security measures.
