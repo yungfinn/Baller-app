@@ -155,17 +155,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Verification routes
-  app.post('/api/verification/upload', isAuthenticated, async (req: any, res) => {
+  app.post('/api/verification/upload', isAuthenticated, upload.fields([
+    { name: 'selfie', maxCount: 1 },
+    { name: 'governmentId', maxCount: 1 }
+  ]), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { selfieFileName, governmentIdFileName, selfieSize, governmentIdSize } = req.body;
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      
+      console.log("Received verification upload:", { userId, files: Object.keys(files) });
+      
+      if (!files.selfie || !files.governmentId) {
+        return res.status(400).json({ message: "Both selfie and government ID files are required" });
+      }
+      
+      const selfieFile = files.selfie[0];
+      const idFile = files.governmentId[0];
       
       // Create selfie document
       const selfieDoc = await storage.uploadVerificationDocument({
         userId,
         documentType: "selfie",
-        fileName: selfieFileName || `selfie_${userId}_${Date.now()}.jpg`,
-        fileUrl: `/uploads/verification/selfie/${userId}_${Date.now()}.jpg`,
+        fileName: selfieFile.originalname,
+        fileUrl: `/uploads/verification/selfie/${userId}_${Date.now()}_${selfieFile.originalname}`,
         reviewStatus: "pending",
       });
       
@@ -173,8 +185,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const idDoc = await storage.uploadVerificationDocument({
         userId,
         documentType: "government_id",
-        fileName: governmentIdFileName || `id_${userId}_${Date.now()}.jpg`,
-        fileUrl: `/uploads/verification/id/${userId}_${Date.now()}.jpg`,
+        fileName: idFile.originalname,
+        fileUrl: `/uploads/verification/id/${userId}_${Date.now()}_${idFile.originalname}`,
         reviewStatus: "pending",
       });
       
