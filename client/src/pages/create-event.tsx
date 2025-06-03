@@ -45,7 +45,10 @@ export default function CreateEvent() {
 
   const createEventMutation = useMutation({
     mutationFn: async (data: InsertEvent) => {
-      return await apiRequest("/api/events", "POST", data);
+      console.log("Mutation function called with data:", data);
+      const response = await apiRequest("/api/events", "POST", data);
+      console.log("API response:", response);
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
@@ -354,53 +357,7 @@ export default function CreateEvent() {
                 )}
               </Button>
               
-              {/* Direct test button */}
-              <Button 
-                type="button"
-                variant="outline"
-                className="w-full h-12"
-                onClick={async () => {
-                  console.log("Direct test started");
-                  try {
-                    const tomorrow = new Date();
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    
-                    const testEvent = {
-                      title: "Test Basketball Game",
-                      description: "Testing event creation",
-                      sportType: "basketball",
-                      skillLevel: "intermediate",
-                      maxPlayers: 8,
-                      locationName: "Local Park",
-                      latitude: "37.7749",
-                      longitude: "-122.4194",
-                      eventDate: tomorrow,
-                      eventTime: "18:00",
-                      notes: "Test event"
-                    };
-                    
-                    const response = await apiRequest("POST", "/api/events", testEvent);
-                    console.log("API Response:", response);
-                    
-                    if (response.ok) {
-                      toast({
-                        title: "Success!",
-                        description: "Test event created successfully",
-                      });
-                      setLocation("/event-created");
-                    }
-                  } catch (error) {
-                    console.error("Test failed:", error);
-                    toast({
-                      title: "Test Failed",
-                      description: String(error),
-                      variant: "destructive",
-                    });
-                  }
-                }}
-              >
-                Test Direct API Call
-              </Button>
+
             </div>
           </form>
         </Form>
