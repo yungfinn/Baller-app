@@ -127,13 +127,15 @@ export default function AdminPanel() {
         description: "User verification status has been updated successfully.",
       });
     },
-    onError: () => {
+    onError: (error, variables, context) => {
       toast({
         title: "Error",
-        description: "Failed to update verification status.",
+        description: "Failed to update verification status. Please try again.",
         variant: "destructive",
       });
     },
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const UserVerificationCard = ({ verification }: { verification: UserVerification }) => {

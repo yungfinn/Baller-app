@@ -599,7 +599,8 @@ export class DatabaseStorage implements IStorage {
   // Admin permission check
   async isUserAdmin(userId: string): Promise<boolean> {
     const user = await this.getUser(userId);
-    return user?.email === 'theyungfinn@gmail.com';
+    const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || ['theyungfinn@gmail.com'];
+    return user?.email ? adminEmails.includes(user.email) : false;
   }
 }
 
