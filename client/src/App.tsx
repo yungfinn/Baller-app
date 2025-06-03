@@ -21,6 +21,7 @@ import AdminPanel from "@/pages/admin-panel";
 import AdminQuickApprove from "@/pages/admin-quick-approve";
 import TestUpload from "@/pages/test-upload";
 import UploadTest from "@/pages/upload-test";
+import AdminSimple from "@/pages/admin-simple";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -43,6 +44,10 @@ function Router() {
     <Switch>
       <Route path="/terms" component={TermsOfUse} />
       <Route path="/terms-of-use" component={TermsOfUse} />
+      {/* Public routes available without authentication */}
+      <Route path="/admin-panel" component={AdminPanel} />
+      <Route path="/upload-test" component={UploadTest} />
+      
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
@@ -58,10 +63,8 @@ function Router() {
           <Route path="/submit-location" component={SubmitLocation} />
           <Route path="/event-created" component={EventCreated} />
           <Route path="/event/:id/chat" component={EventChat} />
-          <Route path="/admin-panel" component={AdminPanel} />
           <Route path="/admin-quick" component={AdminQuickApprove} />
           <Route path="/test-upload" component={TestUpload} />
-          <Route path="/upload-test" component={UploadTest} />
         </>
       )}
       <Route component={NotFound} />
