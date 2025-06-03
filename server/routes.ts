@@ -693,6 +693,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Message content is required" });
       }
 
+      // Basic hate speech filter for beta launch
+      const bannedTerms = [
+        'hate', 'racist', 'violence', 'threat', 'kill', 'die', 'stupid', 'idiot', 
+        'fuck', 'shit', 'damn', 'bitch', 'asshole', 'loser', 'retard', 'gay',
+        'nazi', 'terror', 'bomb', 'weapon', 'drug', 'illegal'
+      ];
+      
+      const messageText = message.toLowerCase();
+      const containsBannedTerm = bannedTerms.some(term => messageText.includes(term));
+      
+      if (containsBannedTerm) {
+        return res.status(400).json({ 
+          message: "Message contains inappropriate content and was blocked",
+          type: "content_filter"
+        });
+      }
+
       // Check if event exists and user has access
       const event = await storage.getEventById(eventId);
       if (!event) {

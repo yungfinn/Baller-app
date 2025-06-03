@@ -59,15 +59,9 @@ export default function Home() {
     }
   }, [showNearbyOnly, userLocation]);
 
+  // Beta version: Simple chronological feed of all events
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["/api/events", { 
-      sport: sportFilter !== "all" ? sportFilter : undefined,
-      skill: skillFilter !== "all" ? skillFilter : undefined,
-      search: searchQuery || undefined,
-      latitude: showNearbyOnly && userLocation ? userLocation.latitude : undefined,
-      longitude: showNearbyOnly && userLocation ? userLocation.longitude : undefined,
-      radius: showNearbyOnly ? 25 : undefined // 25 mile radius
-    }],
+    queryKey: ["/api/events"],
   });
 
   const { data: userRsvps = [] } = useQuery({
