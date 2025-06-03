@@ -18,6 +18,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
+      if (!user) {
+        // Create user if doesn't exist
+        const newUser = await storage.upsertUser({
+          id: userId,
+          email: req.user.claims.email,
+          firstName: req.user.claims.first_name,
+          lastName: req.user.claims.last_name,
+          profileImageUrl: req.user.claims.profile_image_url,
+        });
+        return res.json(newUser);
+      }
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -235,15 +246,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/events', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      
-      // Check if user is verified before allowing event creation
-      const user = await storage.getUser(userId);
-      if (!user || user.verificationStatus !== 'approved') {
-        return res.status(403).json({ 
-          message: "You must complete identity verification before creating events. Please submit your documents for review.",
-          type: "verification_required"
-        });
-      }
       
       // Check if user has premium access for same-day events
       const eventDate = new Date(req.body.eventDate);

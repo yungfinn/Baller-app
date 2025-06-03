@@ -18,6 +18,7 @@ import TermsOfUse from "@/pages/terms-of-use";
 import EventCreated from "@/pages/event-created";
 import EventChat from "@/pages/event-chat";
 import AdminPanel from "@/pages/admin-panel";
+import AdminQuickApprove from "@/pages/admin-quick-approve";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -56,6 +57,7 @@ function Router() {
           <Route path="/event-created" component={EventCreated} />
           <Route path="/event/:id/chat" component={EventChat} />
           <Route path="/admin-panel" component={AdminPanel} />
+          <Route path="/admin-quick" component={AdminQuickApprove} />
         </>
       )}
       <Route component={NotFound} />
