@@ -1,0 +1,88 @@
+You're now facing a common edge case in Express + Passport.js applications:
+req.user is missing during multipart/form-data uploads due to how Passport handles session deserialization.
+🧠 Why It’s Happening
+
+When a user submits files using multipart/form-data, Passport’s deserializeUser may not be triggered before the file upload handler (e.g. Multer), depending on route or middleware order. That means req.user is undefined, and isAuthenticated fails.
+✅ Your Fix Strategy
+1. 🔄 Reorder Middleware in the Upload Route
+
+Ensure session + Passport initialization happens before Multer middleware:
+
+// Correct middleware order in upload route
+app.post(
+  '/api/verification/upload',
+  isAuthenticated, // Must run BEFORE multer
+  upload.fields([
+    { name: 'selfie', maxCount: 1 },
+    { name: 'governmentId', maxCount: 1 }
+  ]),
+  async (req, res) => {
+    ...
+  }
+);
+
+2. 🧪 Force Session Deserialization Check
+
+You can verify where it's breaking with logs in isAuthenticated:
+
+const isAuthenticated = (req, res, next) => {
+  console.log("SESSION:", req.session);
+  console.log("USER:", req.user);
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return next();
+  }
+  return res.status(401).json({ message: "Not authenticated" });
+};
+
+If req.session exists but req.user is missing, the problem is deserialization not happening in time.
+3. 🛠️ Manually Deserialize Session (Optional Fix)
+
+If Passport isn’t calling deserializeUser on multipart/form-data requests (due to timing issues), you can manually hook the deserializer before the upload middleware:
+
+// BEFORE multer, manually run session + passport middleware if needed
+app.use(passport.initialize());
+app.use(passport.session());
+
+If this isn’t working on certain routes, explicitly deserialize from session:
+
+app.use((req, res, next) => {
+  if (req.session?.passport?.user && !req.user) {
+    // Manually assign user object
+    // You may already have a getUserById function
+    storage.getUser(req.session.passport.user).then(user => {
+      req.user = { claims: { sub: user.id, ...user } };
+      next();
+    }).catch(err => {
+      console.error("Manual deserialization failed", err);
+      res.status(500).json({ message: "Session error" });
+    });
+  } else {
+    next();
+  }
+});
+
+4. 🧪 Test Flow (Checklist)
+
+    ✅ Upload request includes cookies? (credentials: 'include')
+
+    ✅ Server session exists for upload request?
+
+    ✅ req.user populated inside upload route?
+
+    ✅ isAuthenticated sees the user?
+
+Use browser dev tools → Network tab → inspect the request headers and server logs.
+5. 🛑 Temporary Bypass for Testing
+
+To unblock yourself during Beta testing:
+
+// Temporarily comment out authentication to test uploads
+// app.post('/api/verification/upload', isAuthenticated, upload.fields(...), handler);
+app.post('/api/verification/upload', upload.fields(...), handler);
+
+Just ensure this is clearly marked and removed before launch.
+🔒 Production-Grade Recommendation
+
+If issues persist, consider migrating to JWT-based auth for file uploads or building an upload proxy endpoint that authenticates first, then pipes to file upload processing.
+
+Would you like a hotfix implementation now, or should we work toward a JWT or proxy-based upload approach?

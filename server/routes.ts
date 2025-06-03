@@ -16,6 +16,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
+  // Manual session deserialization middleware for multipart requests
+  app.use(async (req: any, res, next) => {
+    if (req.session?.passport?.user && !req.user) {
+      try {
+        const userId = req.session.passport.user.claims?.sub || req.session.passport.user;
+        const user = await storage.getUser(userId);
+        if (user) {
+          req.user = {
+            claims: { sub: user.id, email: user.email },
+            expires_at: req.session.passport.user.expires_at
+          };
+        }
+      } catch (err) {
+        console.error("Manual deserialization failed", err);
+      }
+    }
+    next();
+  });
+
   // Configure multer for file uploads
   const storage_config = multer.memoryStorage();
   const upload = multer({ 
@@ -154,14 +173,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Verification routes - temporarily bypass auth for debugging
-  app.post('/api/verification/upload', upload.fields([
+  // Verification routes
+  app.post('/api/verification/upload', isAuthenticated, upload.fields([
     { name: 'selfie', maxCount: 1 },
     { name: 'governmentId', maxCount: 1 }
   ]), async (req: any, res) => {
     try {
-      // Use hardcoded user ID for testing - replace with auth later
-      const userId = "43019661"; // Your test user ID
+      const userId = req.user.claims.sub;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       
       console.log("Received verification upload:", { userId, files: Object.keys(files) });
