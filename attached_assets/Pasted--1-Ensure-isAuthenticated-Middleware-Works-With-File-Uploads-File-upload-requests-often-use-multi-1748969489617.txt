@@ -1,0 +1,82 @@
+✅ 1. Ensure isAuthenticated Middleware Works With File Uploads
+
+File upload requests often use multipart/form-data, which can interfere with cookie/session handling if not correctly configured.
+
+Check for:
+
+    Session cookies being properly sent with the upload request
+
+    The upload endpoint using the isAuthenticated middleware before Multer processes the files
+
+    CORS headers allowing credentials: 'include'
+
+Fix Pattern:
+
+// Correct middleware order (auth comes BEFORE multer)
+app.post('/api/verification/upload', 
+  isAuthenticated, 
+  upload.fields([{ name: 'selfie' }, { name: 'governmentId' }]), 
+  async (req, res) => { ... });
+
+✅ 2. Client-Side: Ensure credentials: 'include' in Fetch Request
+
+When sending files via fetch, you must include session credentials explicitly:
+
+const formData = new FormData();
+formData.append("selfie", files.selfie);
+formData.append("governmentId", files.governmentId);
+
+await fetch("/api/verification/upload", {
+  method: "POST",
+  body: formData,
+  credentials: "include", // 🔑 Required for auth session
+});
+
+✅ 3. Session Cookie Setup (Backend)
+
+In express-session setup (likely in replitAuth.ts), ensure:
+
+cookie: {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax", // Or "none" if cross-origin
+  maxAge: sessionTtl,
+}
+
+Also check:
+
+    app.use(session(...)) is loaded before all routes
+
+    cookie-parser is initialized if required
+
+✅ 4. Multer + Auth Debugging
+
+Add debug logs in isAuthenticated to ensure it:
+
+    Sees the session cookie
+
+    Is able to read the user ID (req.user.claims.sub)
+
+const isAuthenticated = (req, res, next) => {
+  console.log("Session:", req.session);
+  console.log("User claims:", req.user?.claims);
+  ...
+}
+
+✅ 5. Test Flow
+
+Use browser network dev tools to:
+
+    Inspect the request headers (are cookies present?)
+
+    Check the response from the /api/verification/upload call
+
+    Ensure 401 errors aren't coming from missing or expired sessions
+
+🧩 Final Fallback (Temporary for Beta)
+
+If session issues persist, consider:
+
+    Temporarily removing isAuthenticated from the upload route
+
+    Logging req.headers.cookie and req.user to manually verify auth flow

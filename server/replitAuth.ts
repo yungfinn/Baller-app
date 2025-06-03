@@ -38,7 +38,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // Disable for development
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: sessionTtl,
     },
@@ -99,8 +99,15 @@ export async function setupAuth(app: Express) {
     passport.use(strategy);
   }
 
-  passport.serializeUser((user: Express.User, cb) => cb(null, user));
-  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+  passport.serializeUser((user: any, cb) => {
+    console.log("Serializing user:", user);
+    cb(null, { claims: user.claims, access_token: user.access_token, expires_at: user.expires_at });
+  });
+  
+  passport.deserializeUser((userData: any, cb) => {
+    console.log("Deserializing user:", userData);
+    cb(null, userData);
+  });
 
   app.get("/api/login", (req, res, next) => {
     passport.authenticate(`replitauth:${req.hostname}`, {
@@ -129,9 +136,14 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  console.log("Auth check - Session:", req.session?.id);
+  console.log("Auth check - User:", req.user?.claims?.sub);
+  console.log("Auth check - Authenticated:", req.isAuthenticated());
+  
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!req.isAuthenticated() || !user?.expires_at) {
+    console.log("Auth failed - No session or user");
     return res.status(401).json({ message: "Unauthorized" });
   }
 
