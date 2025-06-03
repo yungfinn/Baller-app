@@ -1,0 +1,97 @@
+Thanks for the full codebase snapshot — this is an impressive, production-grade stack. Based on your architecture and the known issues you’re still facing (especially around the admin panel, verification, and UI responsiveness), here’s a high-level code audit and recommendations targeted specifically at those pain points:
+🔍 Admin Panel & Verification Review – Code Audit
+🔧 1. React Query Execution for Admin Panel
+
+Current risk: The admin panel may not be triggering the data fetch due to session-based useEffect or useQuery being blocked.
+
+Recommendation:
+
+// client/src/pages/admin-panel.tsx
+const { data, isLoading, error } = useQuery(
+  'verificationDocs',
+  () => fetch('/api/admin/verification-documents', { credentials: 'include' }).then(res => res.json()),
+  {
+    retry: false,
+    refetchOnWindowFocus: false,
+  }
+);
+
+✅ Ensure that credentials: 'include' is in every fetch/axios call so session cookies are sent.
+🔐 2. Session + Auth Logic
+
+ReplitAuth.ts & middleware:
+
+    Your admin logic relies on email matching theyungfinn@gmail.com. This is fine for now but brittle long-term.
+
+    Consider adding is_admin as a boolean field in users to future-proof it.
+
+✅ Verify on every sensitive route:
+
+if (!req.user || req.user.email !== 'theyungfinn@gmail.com') return res.status(403).send("Unauthorized");
+
+🧾 3. Verification Submission Errors
+
+If user uploads are failing on submission, it’s likely from:
+
+    Missing multipart/form-data handling in Express
+
+    Improper backend validation
+
+    No error feedback on client side
+
+Check server/routes.ts:
+
+app.post("/api/verify/upload", upload.fields([
+  { name: 'selfie' },
+  { name: 'government_id' }
+]), async (req, res) => {
+  // Confirm files exist
+  if (!req.files?.selfie || !req.files?.government_id) {
+    return res.status(400).json({ error: "Missing documents" });
+  }
+  // Save to DB
+});
+
+✅ Add client-side toast or useMutation().onError(...) to catch these errors and display feedback.
+📋 4. Admin Panel Data Display
+
+Check:
+
+    Is the data from the query an array? (e.g. data?.length === 0)
+
+    Do you have a fallback if no data is returned?
+
+Add:
+
+if (isLoading) return <Spinner />;
+if (error) return <p>Failed to load verifications.</p>;
+if (!data || data.length === 0) return <p>No pending verifications.</p>;
+
+✅ Bonus: Use dummy data in development mode with a useEffect fallback.
+📦 5. Storage.ts Schema Handling
+
+You’re already using drizzle-orm — ensure verification docs are joined properly:
+
+return db
+  .select()
+  .from(verificationDocuments)
+  .innerJoin(users, eq(verificationDocuments.userId, users.id))
+  .where(eq(verificationDocuments.reviewStatus, 'pending'));
+
+✅ Confirm returned data includes all the fields the admin panel is rendering (user.email, documentType, file path, etc.)
+📌 Final Suggestions
+Area	Suggestion
+🧪 Testing	Create a manual POST with Postman to /api/verify/upload and check DB
+🔄 State	Add logging to React Query hook (what’s data actually returning?)
+🛡️ Resilience	Add is_admin boolean in schema to clean up email match logic
+💡 Feedback	Use toasts or banners on failed submissions for both user and admin views
+
+Would you like me to generate:
+
+    A React Query test mock for the admin panel?
+
+    A submission logging template for file uploads?
+
+    A visual verification approval table UI for fallback display?
+
+Let me know where you want to reinforce next — you’re close to production quality.

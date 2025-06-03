@@ -33,12 +33,24 @@ export default function AdminPanel() {
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("verification");
 
-  // Fetch verification documents directly
+  // Fetch verification documents with explicit credentials
   const { data: verificationData = [], isLoading: docsLoading, error: docsError } = useQuery({
-    queryKey: ["/api/admin/verification-documents"],
-    retry: 1,
+    queryKey: ["verificationDocs"],
+    queryFn: () => fetch('/api/admin/verification-documents', { 
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    }).then(res => {
+      console.log('Admin fetch response:', res.status, res.statusText);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      return res.json();
+    }),
+    retry: false,
+    refetchOnWindowFocus: false,
     staleTime: 0,
-    refetchOnMount: true,
   });
   
   // Debug logging
@@ -49,6 +61,57 @@ export default function AdminPanel() {
     verificationData
   });
 
+  // Early return for loading states
+  if (docsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Shield className="w-4 h-4 text-white" />
+          </div>
+          <div className="text-xl font-bold text-gray-900 mb-2">Loading Admin Panel</div>
+          <div className="text-gray-600">Fetching verification data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state with detailed feedback
+  if (docsError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md">
+          <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <XCircle className="w-4 h-4 text-white" />
+          </div>
+          <div className="text-xl font-bold text-gray-900 mb-2">Admin Panel Error</div>
+          <div className="text-gray-600 mb-4">Failed to load verification data</div>
+          <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg mb-4">
+            {docsError.message}
+          </div>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Retry Loading
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // No data fallback
+  if (!verificationData || verificationData.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-gray-400 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-4 h-4 text-white" />
+          </div>
+          <div className="text-xl font-bold text-gray-900 mb-2">No Pending Verifications</div>
+          <div className="text-gray-600">All verification documents have been reviewed.</div>
+        </div>
+      </div>
+    );
+  }
+
   // Verification mutation
   const verificationMutation = useMutation({
     mutationFn: async ({ userId, status, notes }: { userId: string; status: string; notes?: string }) => {
@@ -58,7 +121,7 @@ export default function AdminPanel() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/verification-documents"] });
+      queryClient.invalidateQueries({ queryKey: ["verificationDocs"] });
       toast({
         title: "Verification Updated",
         description: "User verification status has been updated successfully.",
@@ -215,7 +278,7 @@ export default function AdminPanel() {
             <h1 className="text-xl font-bold text-white">Baller</h1>
           </div>
           <div className="text-sm text-gray-400">
-            Admin: {adminData?.email || 'theyungfinn@gmail.com'}
+            Admin: theyungfinn@gmail.com
           </div>
         </div>
       </header>
