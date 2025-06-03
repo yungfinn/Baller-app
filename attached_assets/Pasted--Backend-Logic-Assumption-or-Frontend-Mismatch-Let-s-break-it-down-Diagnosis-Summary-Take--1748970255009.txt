@@ -1,0 +1,77 @@
+⚠️ Backend Logic Assumption or Frontend Mismatch
+
+Let’s break it down:
+🔎 Diagnosis Summary
+✅ "Take a Selfie" shows a checkmark
+
+    That likely means:
+
+        The selfie file upload request succeeded (manually or via test).
+
+        The backend created a verification document with documentType: "selfie" for your user.
+
+        The frontend saw this and marked the UI as complete for that section.
+
+❌ "Upload ID" fails with "Upload failed"
+
+    That suggests:
+
+        The second file upload (government ID) isn't being submitted correctly.
+
+        Or it is sent, but the backend rejects or errors out during processing.
+
+✅ Immediate Fix Path
+1. 🛠 Ensure FormData Handles Both Fields Properly
+
+Make sure both files are being sent in the same form submission:
+
+const formData = new FormData();
+formData.append("selfie", selfieFile);
+formData.append("governmentId", idFile);
+
+await fetch("/api/verification/upload", {
+  method: "POST",
+  body: formData,
+  credentials: "include"
+});
+
+Sometimes if governmentId is null or undefined, the backend may not handle it gracefully.
+2. 🔍 Check Upload Route for Both Fields
+
+In /api/verification/upload, confirm this logic exists:
+
+upload.fields([
+  { name: 'selfie', maxCount: 1 },
+  { name: 'governmentId', maxCount: 1 }
+])
+
+Then inside the handler:
+
+const selfieFile = req.files?.selfie?.[0];
+const idFile = req.files?.governmentId?.[0];
+
+if (!selfieFile || !idFile) {
+  return res.status(400).json({ message: "Both selfie and ID are required" });
+}
+
+If your backend currently assumes both fields will be present, but the frontend sometimes only submits one — you’ll get silent errors or broken logic.
+3. ✅ Implement Field-Level Success Feedback (Optional but Best Practice)
+
+Make the frontend track upload response per file so the checkmark only appears after successful API return.
+🔁 Test Plan
+
+    Log in and open DevTools → Network
+
+    Submit both selfie and ID
+
+    Check:
+
+        What’s being sent? (Is governmentId included?)
+
+        What’s the backend response?
+
+        Any logs from backend for missing or malformed data?
+
+💡 Optional Enhancement
+
+If needed, split the upload into two separate endpoints: /upload-selfie and /upload-id. This simplifies debugging and lets you give users real-time feedback per file.

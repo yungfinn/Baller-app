@@ -20,6 +20,7 @@ import EventChat from "@/pages/event-chat";
 import AdminPanel from "@/pages/admin-panel";
 import AdminQuickApprove from "@/pages/admin-quick-approve";
 import TestUpload from "@/pages/test-upload";
+import UploadTest from "@/pages/upload-test";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -60,6 +61,7 @@ function Router() {
           <Route path="/admin-panel" component={AdminPanel} />
           <Route path="/admin-quick" component={AdminQuickApprove} />
           <Route path="/test-upload" component={TestUpload} />
+          <Route path="/upload-test" component={UploadTest} />
         </>
       )}
       <Route component={NotFound} />
