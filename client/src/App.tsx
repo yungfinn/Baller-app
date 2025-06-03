@@ -46,6 +46,7 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/preferences" component={Preferences} />
+          <Route path="/create" component={CreateEvent} />
           <Route path="/create-event" component={CreateEvent} />
           <Route path="/my-events" component={MyEvents} />
           <Route path="/profile" component={Profile} />

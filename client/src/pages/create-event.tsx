@@ -14,11 +14,13 @@ import { apiRequest } from "@/lib/queryClient";
 import { insertEventSchema, type InsertEvent } from "@shared/schema";
 import BottomNavigation from "@/components/bottom-navigation";
 import LocationPicker from "@/components/location-picker";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function CreateEvent() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user, isLoading } = useAuth();
   const [selectedLocation, setSelectedLocation] = useState<{
     name: string;
     address: string;
@@ -116,6 +118,67 @@ export default function CreateEvent() {
       eventDate: eventDateTime,
     });
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is verified
+  if (!user || user.verificationStatus !== 'approved') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b border-gray-100">
+          <div className="max-w-md mx-auto px-4 py-3">
+            <div className="flex items-center space-x-3">
+              <button onClick={() => setLocation("/")} className="text-gray-600">
+                <i className="fas fa-arrow-left text-lg"></i>
+              </button>
+              <h1 className="text-xl font-baller text-gray-900">Create Event</h1>
+            </div>
+          </div>
+        </header>
+
+        <div className="max-w-md mx-auto p-6">
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl text-red-600">Verification Required</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                You must complete identity verification before creating events. This helps keep our community safe.
+              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">Current status: {user?.verificationStatus || 'Not started'}</p>
+                {user?.verificationStatus === 'pending' && (
+                  <p className="text-sm text-blue-600">Your documents are under review</p>
+                )}
+                {user?.verificationStatus === 'rejected' && (
+                  <p className="text-sm text-red-600">Please resubmit your documents</p>
+                )}
+              </div>
+              <Button 
+                onClick={() => setLocation("/identity-verification")}
+                className="w-full bg-red-600 hover:bg-red-700"
+              >
+                {user?.verificationStatus === 'pending' ? 'Check Status' : 'Start Verification'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <BottomNavigation activePage="create" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
