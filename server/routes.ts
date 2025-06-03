@@ -433,6 +433,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test route to create verification documents for demo
+  app.post("/api/test/create-verification", async (req: any, res) => {
+    try {
+      const testUserId = req.body.userId || "demo_user_" + Date.now();
+      
+      // Create test user
+      await storage.upsertUser({
+        id: testUserId,
+        email: `demo${Date.now()}@example.com`,
+        firstName: "Demo",
+        lastName: "User",
+        verificationStatus: "pending"
+      });
+
+      // Create verification documents
+      const selfieDoc = await storage.uploadVerificationDocument({
+        userId: testUserId,
+        documentType: "selfie",
+        fileName: `selfie_${testUserId}.jpg`,
+        fileUrl: `/uploads/verification/selfie/${testUserId}.jpg`,
+        reviewStatus: "pending",
+      });
+      
+      const idDoc = await storage.uploadVerificationDocument({
+        userId: testUserId,
+        documentType: "government_id", 
+        fileName: `id_${testUserId}.jpg`,
+        fileUrl: `/uploads/verification/id/${testUserId}.jpg`,
+        reviewStatus: "pending",
+      });
+      
+      res.status(201).json({ selfie: selfieDoc, governmentId: idDoc, userId: testUserId });
+    } catch (error) {
+      console.error("Error creating test verification:", error);
+      res.status(500).json({ message: "Failed to create test verification" });
+    }
+  });
+
   // Identity verification file upload route
   app.post("/api/verification/upload", isAuthenticated, async (req: any, res) => {
     try {
