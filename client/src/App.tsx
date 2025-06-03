@@ -45,7 +45,7 @@ function Router() {
       <Route path="/terms" component={TermsOfUse} />
       <Route path="/terms-of-use" component={TermsOfUse} />
       {/* Public routes available without authentication */}
-      <Route path="/admin-panel" component={AdminPanel} />
+      <Route path="/admin-panel" component={AdminSimple} />
       <Route path="/upload-test" component={UploadTest} />
       
       {!isAuthenticated ? (
