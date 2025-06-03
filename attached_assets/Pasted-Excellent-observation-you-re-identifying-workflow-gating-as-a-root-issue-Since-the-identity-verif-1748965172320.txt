@@ -1,0 +1,122 @@
+Excellent observation — you're identifying workflow gating as a root issue. Since the identity verification system is blocking event creation, we need to refactor the flow and dependencies so they operate cohesively, even in your Beta stage.
+
+Let’s walk through exactly how to ensure the identity verification system and its dependencies are functioning and wired correctly to unblock event creation.
+✅ SYSTEM FLOW TO VERIFY
+🛠 1. User Submits Verification Docs
+
+📄 identity-verification.tsx
+
+    This form should collect selfie + government ID
+
+    Calls POST /api/verification/upload with proper metadata
+
+✅ Checklist:
+
+    Files sent with metadata: file.name, file.size
+
+    Backend receives req.body (not FormData)
+
+    Backend stores docs in verification_documents table
+
+    User's verification_status is set to "pending"
+
+🔁 Code to Check (Client):
+
+const uploadMutation = useMutation({
+  mutationFn: async (files) => {
+    return await apiRequest("/api/verification/upload", "POST", {
+      selfieFileName: files.selfie.name,
+      governmentIdFileName: files.governmentId.name,
+      selfieSize: files.selfie.size,
+      governmentIdSize: files.governmentId.size
+    });
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    setLocation("/");
+  }
+});
+
+🔁 Code to Check (Server):
+
+app.post('/api/verification/upload', isAuthenticated, async (req, res) => {
+  await storage.uploadVerificationDocument({ ... }) // two documents
+  await storage.updateVerificationStatus(userId, "pending");
+  res.status(201).json({ message: "Uploaded" });
+});
+
+🔐 2. Admin Panel Loads Pending Verifications
+
+📄 admin-panel.tsx uses useQuery to pull from:
+
+GET /api/admin/verification-documents
+
+✅ Make sure:
+
+    Auth middleware allows your admin email
+
+    You can see verificationData in console
+
+    Backend loads from verification_documents joined with users
+
+📤 3. Admin Approves/Rejects
+
+📄 Admin hits Approve/Reject, which calls:
+
+POST /api/admin/users/:userId/verification
+Body: { status: "approved" | "rejected", reviewNotes?: string }
+
+✅ On backend:
+
+await storage.updateVerificationStatus(userId, "approved"); // changes user record
+await storage.markDocumentsAsReviewed(userId, status);
+
+This must:
+
+    Update users.verification_status to approved
+
+    Update verification_documents.review_status
+
+✅ 4. Frontend Reacts to Status Change
+
+📄 In useAuth.ts:
+
+    Add verificationStatus and userTier to User interface
+
+    Make sure useAuth() fetches /api/auth/user and caches it
+
+✅ After admin approves:
+
+    queryClient.invalidateQueries(["/api/auth/user"]) triggers
+
+    User’s state changes to verified
+
+    Event creation gate is unlocked
+
+🧠 CONDITIONAL CHECK IN EVENT CREATION
+
+📄 In create-event.tsx:
+
+You need to block the form if the user is not verified:
+
+const { user } = useAuth();
+
+if (!user?.verificationStatus || user.verificationStatus !== "approved") {
+  return (
+    <div className="p-6 text-center text-red-600">
+      You must verify your identity before creating an event. Please visit your profile to submit documents.
+    </div>
+  );
+}
+
+✅ FINAL CHECKLIST TO VERIFY SYSTEM FLOW
+Step	Task	File(s)	Status
+1	Upload verification docs	identity-verification.tsx, /api/verification/upload	🔲
+2	Store selfie & ID in DB	verification_documents table	🔲
+3	Admin fetches pending	admin-panel.tsx, /api/admin/verification-documents	🔲
+4	Admin approves/rejects	admin-panel.tsx, /api/admin/users/:id/verification	🔲
+5	User’s verificationStatus updates	storage.updateVerificationStatus	🔲
+6	useAuth() shows user as verified	useAuth.ts	🔲
+7	create-event.tsx shows form	If user.verificationStatus === "approved"	🔲
+8	POST /api/events succeeds	server/routes.ts	🔲
+9	Event visible in home feed	home.tsx, /api/events	🔲
