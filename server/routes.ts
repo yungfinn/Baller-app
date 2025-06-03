@@ -712,7 +712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/verification-documents", async (req: any, res) => {
+  app.get("/api/admin/verification-documents", isAuthenticated, async (req: any, res) => {
     try {
       console.log('Fetching verification documents for admin...');
       console.log('User ID:', req.user?.claims?.sub);
