@@ -8,10 +8,27 @@ import { db } from "./db";
 import { users, verificationDocuments, events, eventRsvps, eventMessages, userSwipes } from "@shared/schema";
 import { eq, and, or } from "drizzle-orm";
 import { z } from "zod";
+import multer from "multer";
+import { promises as fs } from "fs";
+import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
+
+  // Configure multer for file uploads
+  const storage_config = multer.memoryStorage();
+  const upload = multer({ 
+    storage: storage_config,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed'));
+      }
+    }
+  });
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {

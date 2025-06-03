@@ -22,13 +22,25 @@ export default function IdentityVerification() {
 
   const uploadMutation = useMutation({
     mutationFn: async (files: { selfie: File; governmentId: File }) => {
-      // Create verification documents with file metadata
-      return await apiRequest("/api/verification/upload", "POST", {
-        selfieFileName: files.selfie.name,
-        governmentIdFileName: files.governmentId.name,
-        selfieSize: files.selfie.size,
-        governmentIdSize: files.governmentId.size
+      console.log("Uploading files:", files.selfie, files.governmentId);
+      
+      // Create FormData for actual file upload
+      const formData = new FormData();
+      formData.append("selfie", files.selfie);
+      formData.append("governmentId", files.governmentId);
+      
+      const response = await fetch("/api/verification/upload", {
+        method: "POST",
+        credentials: "include",
+        body: formData
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Upload failed");
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });

@@ -1,0 +1,81 @@
+🛠️ Diagnose & Fix the Upload Error
+❌ Error:
+
+    "Upload failed. Please try again or contact support."
+
+This means the uploadMutation in identity-verification.tsx is hitting .onError(), likely because the backend endpoint is receiving incomplete or invalid data.
+✅ Step-by-Step Debug Checklist
+🔍 1. Check the Upload Payload
+
+Go to client/src/pages/identity-verification.tsx and log the values being sent:
+
+console.log("Uploading files:", files.selfie, files.governmentId);
+
+Confirm:
+
+    Both files.selfie and files.governmentId are File objects
+
+    Their .name and .size are non-null
+
+🔧 2. Confirm Payload Format in Mutation
+
+Right now, you’re using:
+
+mutationFn: async (files: { selfie: File; governmentId: File }) => {
+  return await apiRequest("/api/verification/upload", "POST", {
+    selfieFileName: files.selfie.name,
+    governmentIdFileName: files.governmentId.name,
+    selfieSize: files.selfie.size,
+    governmentIdSize: files.governmentId.size
+  });
+}
+
+✅ That’s metadata only. If the backend expects actual files, you must use FormData.
+✅ If File Uploads Are Required:
+
+const formData = new FormData();
+formData.append("selfie", files.selfie);
+formData.append("governmentId", files.governmentId);
+
+return await fetch("/api/verification/upload", {
+  method: "POST",
+  credentials: "include",
+  body: formData
+});
+
+Then change the backend route to parse multipart/form-data using a package like multer.
+🧪 3. Test the Backend Upload Route
+
+In /server/routes.ts, log req.body and confirm:
+
+console.log("Received verification upload:", req.body);
+
+Also check:
+
+    Are any fields undefined?
+
+    Are files missing or empty?
+
+🧱 4. Confirm File Permissions (Replit)
+
+Replit sometimes needs explicit access to /uploads/verification/. If this folder isn't pre-created or lacks write permissions, fs.writeFile or similar will fail silently.
+
+Make sure:
+
+    The directories exist (uploads/verification/selfie, .../id)
+
+    Your app isn’t sandboxed or needs fs.promises.mkdir({ recursive: true })
+
+🔐 5. Re-enable and Test the Gated Flow
+
+Once uploads are working, re-enable this block in the backend:
+
+const user = await storage.getUser(userId);
+if (!user || user.verificationStatus !== 'approved') {
+  return res.status(403).json({ 
+    message: "You must complete identity verification before creating events.",
+    type: "verification_required"
+  });
+}
+
+This will restrict event creation to verified users only — just as you planned for Beta.
