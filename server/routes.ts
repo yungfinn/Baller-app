@@ -130,19 +130,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/verification/upload', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { documentType, fileName, fileUrl } = req.body;
+      const { selfieFileName, governmentIdFileName, selfieSize, governmentIdSize } = req.body;
       
-      const document = await storage.uploadVerificationDocument({
+      // Create selfie document
+      const selfieDoc = await storage.uploadVerificationDocument({
         userId,
-        documentType,
-        fileName,
-        fileUrl,
+        documentType: "selfie",
+        fileName: selfieFileName || `selfie_${userId}_${Date.now()}.jpg`,
+        fileUrl: `/uploads/verification/selfie/${userId}_${Date.now()}.jpg`,
+        reviewStatus: "pending",
       });
       
-      res.json(document);
+      // Create government ID document
+      const idDoc = await storage.uploadVerificationDocument({
+        userId,
+        documentType: "government_id",
+        fileName: governmentIdFileName || `id_${userId}_${Date.now()}.jpg`,
+        fileUrl: `/uploads/verification/id/${userId}_${Date.now()}.jpg`,
+        reviewStatus: "pending",
+      });
+      
+      // Update user verification status to pending
+      await storage.updateVerificationStatus(userId, "pending");
+      
+      res.status(201).json({ 
+        selfie: selfieDoc, 
+        governmentId: idDoc,
+        message: "Verification documents uploaded successfully"
+      });
     } catch (error) {
-      console.error("Error uploading verification document:", error);
-      res.status(500).json({ message: "Failed to upload verification document" });
+      console.error("Error uploading verification documents:", error);
+      res.status(500).json({ message: "Failed to upload verification documents" });
     }
   });
 

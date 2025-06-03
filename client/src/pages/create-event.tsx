@@ -45,8 +45,7 @@ export default function CreateEvent() {
 
   const createEventMutation = useMutation({
     mutationFn: async (data: InsertEvent) => {
-      const response = await apiRequest("POST", "/api/events", data);
-      return response.json();
+      return await apiRequest("/api/events", "POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });

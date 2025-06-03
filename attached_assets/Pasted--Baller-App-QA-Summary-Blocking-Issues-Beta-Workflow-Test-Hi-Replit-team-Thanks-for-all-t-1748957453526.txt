@@ -1,0 +1,59 @@
+🔧 Baller App – QA Summary & Blocking Issues (Beta Workflow Test)
+
+Hi Replit team,
+
+Thanks for all the progress so far. I’ve just completed a round of QA on the current Baller build. Below is a clear breakdown of what’s working, what’s broken, and where to focus next:
+✅ Working
+
+    Authentication: Login flow is smooth with Replit OpenID
+
+    Navigation Tabs: All 4 (Discover, My Events, Create, Profile) load correctly
+
+    Profile Page: Shows logged-in user; admin button appears correctly for admin account
+
+    Discover Tab: Filters previously RSVP’d events as expected
+
+❌ Issues Identified (Blocking Beta Launch)
+1. 🛑 Event Creation Not Functional
+
+    Issue: Clicking “Create” does not post the event or provide user feedback.
+
+    Expected Behavior: Created event should show in "My Events" under "Hosting"
+
+    Suggested Fix: Ensure form submission is correctly wired to trigger the backend event creation route and return a success/failure toast. Verify required fields are actually passed into the DB.
+
+2. 📄 Verification Submissions Fail Silently
+
+    Issue: Uploading a selfie and ID results in an error or no feedback. No data is saved or visible to admin.
+
+    Expected Behavior: Documents should be saved securely, marked as “pending,” and linked to the user for admin review.
+
+    Suggested Fix: Audit /api/verification-upload route, ensure files are stored, and user ID is properly associated.
+
+3. 🔒 Admin Panel Loads But Is Empty
+
+    Issue: Page loads at /admin-panel, but no pending verifications (including seeded test data like “John Smith”) are displayed.
+
+    Expected Behavior: Admin should see list of pending users with approve/reject actions and associated document previews.
+
+    Suggested Fix:
+
+        Confirm useQuery in admin-panel.tsx is triggered (React Query debug shows it may not fire)
+
+        Check response payload from /api/admin/verification-documents
+
+        Validate authentication/session cookie behavior for admin-only routes
+
+🚨 Suggested Next Steps
+
+Fix event creation submission flow
+
+Repair file upload and identity submission handling
+
+    Ensure admin panel query is functional and renders test verification entries
+
+Let me know if you need console logs or further traces — happy to help isolate any parts of this flow.
+
+Thanks again!
+
+— theyungfinn
