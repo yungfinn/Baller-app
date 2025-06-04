@@ -47,6 +47,7 @@ function Router() {
       {/* Public routes available without authentication */}
       <Route path="/admin-panel" component={AdminSimple} />
       <Route path="/upload-test" component={UploadTest} />
+      <Route path="/identity-verification" component={IdentityVerification} />
       
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
