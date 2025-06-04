@@ -29,7 +29,7 @@ export default function IdentityVerification() {
       formData.append("selfie", files.selfie);
       formData.append("governmentId", files.governmentId);
       
-      const response = await fetch("/api/verification/upload", {
+      const response = await fetch("/api/verification/upload-dev", {
         method: "POST",
         credentials: "include",
         body: formData

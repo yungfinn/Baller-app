@@ -129,14 +129,18 @@ export default function AdminSimple() {
                             src={doc.fileUrl} 
                             alt={`${doc.documentType} document`}
                             className="w-full max-w-48 h-auto rounded border object-cover"
+                            onLoad={(e) => {
+                              console.log("Image loaded successfully:", doc.fileUrl);
+                            }}
                             onError={(e) => {
+                              console.error("Image failed to load:", doc.fileUrl);
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
                               target.nextElementSibling?.classList.remove('hidden');
                             }}
                           />
                           <div className="hidden text-sm text-gray-500 italic">
-                            Image preview not available
+                            Image preview not available - Path: {doc.fileUrl}
                           </div>
                         </div>
                         
