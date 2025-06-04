@@ -50,7 +50,7 @@ export default function CreateEvent() {
       console.log("=== MUTATION START ===");
       console.log("Mutation function called with data:", data);
       try {
-        const response = await apiRequest("/api/events", "POST", data);
+        const response = await apiRequest("/api/events/test", "POST", data);
         console.log("API response success:", response);
         return response;
       } catch (error) {
