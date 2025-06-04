@@ -22,6 +22,7 @@ import AdminQuickApprove from "@/pages/admin-quick-approve";
 import TestUpload from "@/pages/test-upload";
 import UploadTest from "@/pages/upload-test";
 import AdminSimple from "@/pages/admin-simple";
+import TestCreateEvent from "@/pages/test-create";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -47,6 +48,7 @@ function Router() {
       {/* Public routes available without authentication */}
       <Route path="/admin-panel" component={AdminSimple} />
       <Route path="/upload-test" component={UploadTest} />
+      <Route path="/test-create" component={TestCreateEvent} />
       <Route path="/identity-verification" component={IdentityVerification} />
       
       {!isAuthenticated ? (
