@@ -47,20 +47,31 @@ export default function CreateEvent() {
 
   const createEventMutation = useMutation({
     mutationFn: async (data: InsertEvent) => {
+      console.log("=== MUTATION START ===");
       console.log("Mutation function called with data:", data);
-      const response = await apiRequest("/api/events", "POST", data);
-      console.log("API response:", response);
-      return response;
+      try {
+        const response = await apiRequest("/api/events", "POST", data);
+        console.log("API response success:", response);
+        return response;
+      } catch (error) {
+        console.error("API request failed:", error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("=== MUTATION SUCCESS ===");
+      console.log("Success callback triggered with data:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       toast({
         title: "Event Created",
         description: "Your event has been created successfully.",
       });
+      console.log("About to redirect to /event-created");
       setLocation("/event-created");
+      console.log("Redirect called");
     },
     onError: (error: any) => {
+      console.log("=== MUTATION ERROR ===");
       console.log("Event creation error:", error);
       
       // Check if it's a premium access error
@@ -73,7 +84,7 @@ export default function CreateEvent() {
       } else {
         toast({
           title: "Event Creation Failed",
-          description: "Please check your details and try again.",
+          description: error.message || "Please check your details and try again.",
           variant: "destructive",
         });
       }
