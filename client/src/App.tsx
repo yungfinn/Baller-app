@@ -23,6 +23,7 @@ import TestUpload from "@/pages/test-upload";
 import UploadTest from "@/pages/upload-test";
 import AdminSimple from "@/pages/admin-simple";
 import TestCreateEvent from "@/pages/test-create";
+import CreateDemo from "@/pages/create-demo";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/admin-panel" component={AdminSimple} />
       <Route path="/upload-test" component={UploadTest} />
       <Route path="/test-create" component={TestCreateEvent} />
+      <Route path="/create-demo" component={CreateDemo} />
       <Route path="/identity-verification" component={IdentityVerification} />
       
       {!isAuthenticated ? (
