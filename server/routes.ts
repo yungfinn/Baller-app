@@ -151,22 +151,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (!user) {
-        // Create user if doesn't exist
-        const newUser = await storage.upsertUser({
-          id: userId,
-          email: req.user.claims.email,
-          firstName: req.user.claims.first_name,
-          lastName: req.user.claims.last_name,
-          profileImageUrl: req.user.claims.profile_image_url,
-        });
-        return res.json(newUser);
-      }
-      res.json(user);
+      // Development bypass: return test user data
+      const testUser = {
+        id: "43019661",
+        email: "theyungfinn@gmail.com",
+        firstName: null,
+        lastName: null,
+        profileImageUrl: null,
+        verificationStatus: "approved",
+        userTier: "premium",
+        repPoints: 100,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      res.json(testUser);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
