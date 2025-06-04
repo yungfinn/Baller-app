@@ -101,10 +101,13 @@ export default function AdminSimple() {
                     <User className="w-5 h-5" />
                     <div>
                       <div className="font-semibold">
-                        {userVerification.userFirstName} {userVerification.userLastName}
+                        {userVerification.userFirstName || 'No First Name'} {userVerification.userLastName || 'No Last Name'}
                       </div>
                       <div className="text-sm text-gray-600 font-normal">
-                        {userVerification.userEmail}
+                        <strong>Email:</strong> {userVerification.userEmail}
+                      </div>
+                      <div className="text-xs text-gray-500 font-normal">
+                        <strong>User ID:</strong> {userVerification.userId}
                       </div>
                     </div>
                   </CardTitle>
@@ -119,11 +122,32 @@ export default function AdminSimple() {
                           </Badge>
                           <Badge variant="secondary">{doc.reviewStatus}</Badge>
                         </div>
+                        
+                        {/* Image Preview */}
+                        <div className="mb-3">
+                          <img 
+                            src={doc.fileUrl} 
+                            alt={`${doc.documentType} document`}
+                            className="w-full max-w-48 h-auto rounded border object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                          <div className="hidden text-sm text-gray-500 italic">
+                            Image preview not available
+                          </div>
+                        </div>
+                        
                         <p className="text-sm text-gray-600 mb-2">
-                          File: {doc.fileName || 'No filename'}
+                          <strong>File:</strong> {doc.fileName || 'No filename'}
                         </p>
                         <p className="text-sm text-gray-600">
-                          Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}
+                          <strong>Uploaded:</strong> {new Date(doc.uploadedAt).toLocaleDateString()}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          <strong>Path:</strong> {doc.fileUrl}
                         </p>
                       </div>
                     ))}

@@ -1,0 +1,108 @@
+🔍 Issues Identified
+
+    Lack of User Identifier in Admin Panel
+
+        Admin cannot tell which user submitted the document (email not visible).
+
+        Makes it impossible to manage multiple verifications with confidence.
+
+    Missing Image Previews
+
+        Only metadata (e.g., filenames, sizes) is shown.
+
+        No way to visually inspect the uploaded documents before approving/denying.
+
+✅ Recommended Fixes + Implementation Plan
+1. 📧 Show User Email & ID in Admin Panel
+✅ Backend (API Enhancement)
+
+In your /api/admin/verification-documents route:
+
+    Ensure the query joins the users table to fetch email and id.
+
+// server/routes.ts
+const results = await db
+  .selectFrom('verification_documents')
+  .innerJoin('users', 'verification_documents.user_id', 'users.id')
+  .select([
+    'verification_documents.*',
+    'users.email as userEmail',
+    'users.id as userId'
+  ])
+  .where('verification_documents.review_status', '=', 'pending')
+  .execute();
+
+✅ Frontend (Display in UI)
+
+Update the admin panel component:
+
+{
+  verificationDocs.map(doc => (
+    <div key={doc.id} className="p-4 bg-white rounded shadow">
+      <div className="text-sm text-gray-600 mb-1">
+        <strong>User:</strong> {doc.userEmail}
+      </div>
+      <div className="text-xs text-gray-400 mb-2">
+        User ID: {doc.userId}
+      </div>
+      {/* ... other UI elements */}
+    </div>
+  ))
+}
+
+2. 🖼️ Display Uploaded Images in Admin Panel
+✅ Frontend (Image Rendering)
+
+In the admin panel UI, render the image directly from its file path:
+
+<img 
+  src={doc.fileUrl} 
+  alt={`${doc.documentType}`} 
+  className="w-48 h-auto rounded border mt-2" 
+/>
+
+Ensure that fileUrl points to a public-accessible route like:
+
+/uploads/verification/selfie/<filename>.jpg
+/uploads/verification/id/<filename>.jpg
+
+✅ Backend (Static File Hosting)
+
+Make sure the server hosts uploaded files:
+
+// server/index.ts
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
+This allows files stored under uploads/ to be served publicly at /uploads/....
+🔁 Optional: Group Submissions By User
+
+If you want to list all documents per user as one approval block (selfie + ID together):
+
+    Group results in the backend or on the frontend
+
+    Example:
+
+{
+  groupedSubmissions.map(user => (
+    <div key={user.email} className="user-submission">
+      <h3>{user.email}</h3>
+      <img src={user.selfieUrl} />
+      <img src={user.idUrl} />
+      <button onClick={() => approve(user.id)}>Approve</button>
+    </div>
+  ))
+}
+
+✅ Summary: What to Do in Replit
+
+Backend: Update /api/admin/verification-documents to return email, userId, and full fileUrl
+
+Frontend (Admin Panel):
+
+    Add user email + ID
+
+    Render <img src=... /> for visual inspection
+
+Backend Static Hosting: Serve /uploads via Express
+
+Optional: Group both documents per user in UI
